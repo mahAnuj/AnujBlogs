@@ -1,0 +1,186 @@
+import type { Express } from "express";
+import { createServer, type Server } from "http";
+import { storage } from "./storage";
+import { insertPostSchema, insertCommentSchema, updatePostSchema } from "@shared/schema";
+import { z } from "zod";
+
+export async function registerRoutes(app: Express): Promise<Server> {
+  // Categories
+  app.get("/api/categories", async (req, res) => {
+    try {
+      const categories = await storage.getCategories();
+      res.json(categories);
+    } catch (error) {
+      console.error("Error fetching categories:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
+  // Tags
+  app.get("/api/tags", async (req, res) => {
+    try {
+      const tags = await storage.getTags();
+      res.json(tags);
+    } catch (error) {
+      console.error("Error fetching tags:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
+  // Posts
+  app.get("/api/posts", async (req, res) => {
+    try {
+      const { category, tag, search, status = "published" } = req.query;
+      const posts = await storage.getPosts({
+        category: category as string,
+        tag: tag as string,
+        search: search as string,
+        status: status as string,
+      });
+      res.json(posts);
+    } catch (error) {
+      console.error("Error fetching posts:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
+  app.get("/api/posts/:slug", async (req, res) => {
+    try {
+      const { slug } = req.params;
+      const post = await storage.getPostBySlug(slug);
+      
+      if (!post) {
+        return res.status(404).json({ error: "Post not found" });
+      }
+
+      // Increment view count
+      await storage.incrementPostViews(post.id);
+      
+      res.json(post);
+    } catch (error) {
+      console.error("Error fetching post:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
+  app.post("/api/posts", async (req, res) => {
+    try {
+      const validatedData = insertPostSchema.parse(req.body);
+      const post = await storage.createPost(validatedData);
+      res.status(201).json(post);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ error: "Validation error", details: error.errors });
+      }
+      console.error("Error creating post:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
+  app.put("/api/posts/:id", async (req, res) => {
+    try {
+      const { id } = req.params;
+      const validatedData = updatePostSchema.parse(req.body);
+      const post = await storage.updatePost(id, validatedData);
+      
+      if (!post) {
+        return res.status(404).json({ error: "Post not found" });
+      }
+      
+      res.json(post);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ error: "Validation error", details: error.errors });
+      }
+      console.error("Error updating post:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
+  app.delete("/api/posts/:id", async (req, res) => {
+    try {
+      const { id } = req.params;
+      const deleted = await storage.deletePost(id);
+      
+      if (!deleted) {
+        return res.status(404).json({ error: "Post not found" });
+      }
+      
+      res.status(204).send();
+    } catch (error) {
+      console.error("Error deleting post:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
+  app.post("/api/posts/:id/like", async (req, res) => {
+    try {
+      const { id } = req.params;
+      await storage.incrementPostLikes(id);
+      res.status(200).json({ success: true });
+    } catch (error) {
+      console.error("Error liking post:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
+  // Comments
+  app.get("/api/posts/:postId/comments", async (req, res) => {
+    try {
+      const { postId } = req.params;
+      const comments = await storage.getCommentsByPost(postId);
+      res.json(comments);
+    } catch (error) {
+      console.error("Error fetching comments:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
+  app.post("/api/posts/:postId/comments", async (req, res) => {
+    try {
+      const { postId } = req.params;
+      const validatedData = insertCommentSchema.parse({
+        ...req.body,
+        postId,
+      });
+      const comment = await storage.createComment(validatedData);
+      res.status(201).json(comment);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ error: "Validation error", details: error.errors });
+      }
+      console.error("Error creating comment:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
+  app.post("/api/comments/:id/like", async (req, res) => {
+    try {
+      const { id } = req.params;
+      await storage.incrementCommentLikes(id);
+      res.status(200).json({ success: true });
+    } catch (error) {
+      console.error("Error liking comment:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
+  // Search
+  app.get("/api/search", async (req, res) => {
+    try {
+      const { q } = req.query;
+      if (!q || typeof q !== "string") {
+        return res.status(400).json({ error: "Search query is required" });
+      }
+
+      const posts = await storage.getPosts({ search: q, status: "published" });
+      res.json(posts);
+    } catch (error) {
+      console.error("Error searching posts:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
+  const httpServer = createServer(app);
+  return httpServer;
+}

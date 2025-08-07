@@ -1,0 +1,161 @@
+import { Link, useLocation } from "wouter";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { useTheme } from "@/hooks/use-theme";
+import { SearchBar } from "@/components/search-bar";
+import { useQuery } from "@tanstack/react-query";
+import { useState } from "react";
+import { Menu, X, Sun, Moon, Code } from "lucide-react";
+import { cn } from "@/lib/utils";
+import type { Category } from "@shared/schema";
+
+export function Header() {
+  const { theme, toggleTheme } = useTheme();
+  const [location] = useLocation();
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
+  const { data: categories = [] } = useQuery<Category[]>({
+    queryKey: ["/api/categories"],
+  });
+
+  const isActive = (path: string) => {
+    if (path === "/" && location === "/") return true;
+    if (path !== "/" && location.startsWith(path)) return true;
+    return false;
+  };
+
+  const isActiveCategory = (categorySlug: string) => {
+    return location === `/category/${categorySlug}`;
+  };
+
+  return (
+    <header className="bg-white dark:bg-slate-800 shadow-sm border-b border-gray-200 dark:border-slate-700 sticky top-0 z-50">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex justify-between items-center h-16">
+          {/* Logo and Brand */}
+          <div className="flex items-center space-x-4">
+            <Link href="/">
+              <a className="flex items-center space-x-3">
+                <div className="w-10 h-10 bg-gradient-to-br from-primary to-accent rounded-lg flex items-center justify-center">
+                  <Code className="text-white" size={20} />
+                </div>
+                <div>
+                  <h1 className="text-xl font-bold text-secondary dark:text-white">TechStack</h1>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">by anujmahajan.dev</p>
+                </div>
+              </a>
+            </Link>
+          </div>
+
+          {/* Desktop Navigation */}
+          <nav className="hidden md:flex items-center space-x-8">
+            <Link href="/">
+              <a className={cn(
+                "font-medium transition-colors",
+                isActive("/") 
+                  ? "text-primary border-b-2 border-primary pb-1" 
+                  : "text-gray-600 dark:text-gray-300 hover:text-primary"
+              )}>
+                All Posts
+              </a>
+            </Link>
+            
+            {categories.map((category) => (
+              <Link key={category.id} href={`/category/${category.slug}`}>
+                <a className={cn(
+                  "font-medium transition-colors",
+                  isActiveCategory(category.slug)
+                    ? "text-primary border-b-2 border-primary pb-1"
+                    : "text-gray-600 dark:text-gray-300 hover:text-primary"
+                )}>
+                  {category.name}
+                </a>
+              </Link>
+            ))}
+          </nav>
+
+          {/* Search and Controls */}
+          <div className="flex items-center space-x-4">
+            {/* Search Bar */}
+            <div className="hidden sm:block">
+              <SearchBar />
+            </div>
+
+            {/* Theme Toggle */}
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={toggleTheme}
+              className="rounded-lg"
+            >
+              {theme === "light" ? (
+                <Moon className="h-5 w-5" />
+              ) : (
+                <Sun className="h-5 w-5" />
+              )}
+            </Button>
+
+            {/* Mobile Menu Button */}
+            <Button
+              variant="ghost"
+              size="icon"
+              className="md:hidden"
+              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+            >
+              {isMobileMenuOpen ? (
+                <X className="h-5 w-5" />
+              ) : (
+                <Menu className="h-5 w-5" />
+              )}
+            </Button>
+          </div>
+        </div>
+
+        {/* Mobile Menu */}
+        {isMobileMenuOpen && (
+          <div className="md:hidden border-t border-gray-200 dark:border-slate-700 py-4">
+            <div className="flex flex-col space-y-4">
+              {/* Mobile Search */}
+              <div className="sm:hidden">
+                <SearchBar />
+              </div>
+
+              {/* Mobile Navigation */}
+              <nav className="flex flex-col space-y-2">
+                <Link href="/">
+                  <a 
+                    className={cn(
+                      "block px-3 py-2 rounded-md font-medium transition-colors",
+                      isActive("/") 
+                        ? "text-primary bg-primary/10" 
+                        : "text-gray-600 dark:text-gray-300 hover:text-primary hover:bg-gray-50 dark:hover:bg-slate-700"
+                    )}
+                    onClick={() => setIsMobileMenuOpen(false)}
+                  >
+                    All Posts
+                  </a>
+                </Link>
+                
+                {categories.map((category) => (
+                  <Link key={category.id} href={`/category/${category.slug}`}>
+                    <a 
+                      className={cn(
+                        "block px-3 py-2 rounded-md font-medium transition-colors",
+                        isActiveCategory(category.slug)
+                          ? "text-primary bg-primary/10"
+                          : "text-gray-600 dark:text-gray-300 hover:text-primary hover:bg-gray-50 dark:hover:bg-slate-700"
+                      )}
+                      onClick={() => setIsMobileMenuOpen(false)}
+                    >
+                      {category.name}
+                    </a>
+                  </Link>
+                ))}
+              </nav>
+            </div>
+          </div>
+        )}
+      </div>
+    </header>
+  );
+}

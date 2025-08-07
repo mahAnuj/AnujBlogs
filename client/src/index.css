@@ -1,0 +1,320 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: hsl(0, 0%, 100%);
+  --foreground: hsl(210, 25%, 7.8431%);
+  --card: hsl(180, 6.6667%, 97.0588%);
+  --card-foreground: hsl(210, 25%, 7.8431%);
+  --popover: hsl(0, 0%, 100%);
+  --popover-foreground: hsl(210, 25%, 7.8431%);
+  --primary: hsl(211.6, 100%, 63.1%);
+  --primary-foreground: hsl(0, 0%, 100%);
+  --secondary: hsl(210, 25%, 7.8431%);
+  --secondary-foreground: hsl(0, 0%, 100%);
+  --muted: hsl(240, 1.9608%, 90%);
+  --muted-foreground: hsl(210, 25%, 7.8431%);
+  --accent: hsl(186.6, 100%, 53.1%);
+  --accent-foreground: hsl(210, 25%, 7.8431%);
+  --destructive: hsl(356.3033, 90.5579%, 54.3137%);
+  --destructive-foreground: hsl(0, 0%, 100%);
+  --border: hsl(201.4286, 30.4348%, 90.9804%);
+  --input: hsl(200, 23.0769%, 97.4510%);
+  --ring: hsl(211.6, 100%, 63.1%);
+  --chart-1: hsl(211.6, 100%, 63.1%);
+  --chart-2: hsl(159.7826, 100%, 36.0784%);
+  --chart-3: hsl(42.0290, 92.8251%, 56.2745%);
+  --chart-4: hsl(147.1429, 78.5047%, 41.9608%);
+  --chart-5: hsl(341.4894, 75.2000%, 50.9804%);
+  --sidebar: hsl(180, 6.6667%, 97.0588%);
+  --sidebar-foreground: hsl(210, 25%, 7.8431%);
+  --sidebar-primary: hsl(211.6, 100%, 63.1%);
+  --sidebar-primary-foreground: hsl(0, 0%, 100%);
+  --sidebar-accent: hsl(211.5789, 51.3514%, 92.7451%);
+  --sidebar-accent-foreground: hsl(211.6, 100%, 63.1%);
+  --sidebar-border: hsl(205.0000, 25.0000%, 90.5882%);
+  --sidebar-ring: hsl(211.6, 100%, 63.1%);
+  --font-sans: 'Inter', sans-serif;
+  --font-serif: 'Georgia', serif;
+  --font-mono: 'JetBrains Mono', monospace;
+  --radius: 0.75rem;
+  --shadow-2xs: 0px 1px 2px 0px hsla(0, 0%, 0%, 0.05);
+  --shadow-xs: 0px 1px 2px 0px hsla(0, 0%, 0%, 0.05);
+  --shadow-sm: 0px 1px 2px 0px hsla(0, 0%, 0%, 0.05), 0px 1px 3px 0px hsla(0, 0%, 0%, 0.1);
+  --shadow: 0px 1px 2px 0px hsla(0, 0%, 0%, 0.05), 0px 1px 3px 0px hsla(0, 0%, 0%, 0.1);
+  --shadow-md: 0px 1px 2px 0px hsla(0, 0%, 0%, 0.05), 0px 4px 6px -1px hsla(0, 0%, 0%, 0.1);
+  --shadow-lg: 0px 1px 2px 0px hsla(0, 0%, 0%, 0.05), 0px 10px 15px -3px hsla(0, 0%, 0%, 0.1);
+  --shadow-xl: 0px 1px 2px 0px hsla(0, 0%, 0%, 0.05), 0px 20px 25px -5px hsla(0, 0%, 0%, 0.1);
+  --shadow-2xl: 0px 1px 2px 0px hsla(0, 0%, 0%, 0.05), 0px 25px 50px -12px hsla(0, 0%, 0%, 0.25);
+  --tracking-normal: 0em;
+  --spacing: 0.25rem;
+}
+
+.dark {
+  --background: hsl(210, 25%, 7.8431%);
+  --foreground: hsl(200, 6.6667%, 91.1765%);
+  --card: hsl(220, 13%, 13%);
+  --card-foreground: hsl(0, 0%, 85.0980%);
+  --popover: hsl(210, 25%, 7.8431%);
+  --popover-foreground: hsl(200, 6.6667%, 91.1765%);
+  --primary: hsl(211.6, 100%, 63.1%);
+  --primary-foreground: hsl(0, 0%, 100%);
+  --secondary: hsl(195.0000, 15.3846%, 94.9020%);
+  --secondary-foreground: hsl(210, 25%, 7.8431%);
+  --muted: hsl(220, 13%, 13%);
+  --muted-foreground: hsl(210, 3.3898%, 46.2745%);
+  --accent: hsl(186.6, 100%, 53.1%);
+  --accent-foreground: hsl(210, 25%, 7.8431%);
+  --destructive: hsl(356.3033, 90.5579%, 54.3137%);
+  --destructive-foreground: hsl(0, 0%, 100%);
+  --border: hsl(220, 13%, 20%);
+  --input: hsl(220, 13%, 18%);
+  --ring: hsl(211.6, 100%, 63.1%);
+  --chart-1: hsl(211.6, 100%, 63.1%);
+  --chart-2: hsl(159.7826, 100%, 36.0784%);
+  --chart-3: hsl(42.0290, 92.8251%, 56.2745%);
+  --chart-4: hsl(147.1429, 78.5047%, 41.9608%);
+  --chart-5: hsl(341.4894, 75.2000%, 50.9804%);
+  --sidebar: hsl(220, 13%, 13%);
+  --sidebar-foreground: hsl(0, 0%, 85.0980%);
+  --sidebar-primary: hsl(211.6, 100%, 63.1%);
+  --sidebar-primary-foreground: hsl(0, 0%, 100%);
+  --sidebar-accent: hsl(220, 13%, 20%);
+  --sidebar-accent-foreground: hsl(211.6, 100%, 63.1%);
+  --sidebar-border: hsl(220, 13%, 20%);
+  --sidebar-ring: hsl(211.6, 100%, 63.1%);
+  --font-sans: 'Inter', sans-serif;
+  --font-serif: 'Georgia', serif;
+  --font-mono: 'JetBrains Mono', monospace;
+  --radius: 0.75rem;
+  --shadow-2xs: 0px 1px 2px 0px hsla(0, 0%, 0%, 0.1);
+  --shadow-xs: 0px 1px 2px 0px hsla(0, 0%, 0%, 0.1);
+  --shadow-sm: 0px 1px 2px 0px hsla(0, 0%, 0%, 0.1), 0px 1px 3px 0px hsla(0, 0%, 0%, 0.2);
+  --shadow: 0px 1px 2px 0px hsla(0, 0%, 0%, 0.1), 0px 1px 3px 0px hsla(0, 0%, 0%, 0.2);
+  --shadow-md: 0px 1px 2px 0px hsla(0, 0%, 0%, 0.1), 0px 4px 6px -1px hsla(0, 0%, 0%, 0.2);
+  --shadow-lg: 0px 1px 2px 0px hsla(0, 0%, 0%, 0.1), 0px 10px 15px -3px hsla(0, 0%, 0%, 0.2);
+  --shadow-xl: 0px 1px 2px 0px hsla(0, 0%, 0%, 0.1), 0px 20px 25px -5px hsla(0, 0%, 0%, 0.3);
+  --shadow-2xl: 0px 1px 2px 0px hsla(0, 0%, 0%, 0.1), 0px 25px 50px -12px hsla(0, 0%, 0%, 0.4);
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply font-sans antialiased bg-background text-foreground;
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+
+  /* Custom scrollbar */
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  ::-webkit-scrollbar-track {
+    @apply bg-muted;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    @apply bg-border rounded-full;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background-color: hsl(210, 25%, 7.8431%, 0.5);
+  }
+
+  /* Line clamp utilities */
+  .line-clamp-1 {
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 1;
+  }
+
+  .line-clamp-2 {
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+  }
+
+  .line-clamp-3 {
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 3;
+  }
+
+  /* Prose styling for markdown content */
+  .prose {
+    @apply text-foreground;
+  }
+
+  .prose h1,
+  .prose h2,
+  .prose h3,
+  .prose h4,
+  .prose h5,
+  .prose h6 {
+    @apply text-foreground font-bold;
+  }
+
+  .prose a {
+    @apply text-primary hover:text-accent no-underline;
+  }
+
+  .prose blockquote {
+    @apply border-l-4 border-primary bg-muted pl-4 py-2 my-6 italic;
+    background-color: hsl(240, 1.9608%, 90%, 0.5);
+  }
+
+  .prose code {
+    @apply bg-muted px-1.5 py-0.5 rounded-md text-sm font-mono;
+  }
+
+  .prose pre {
+    @apply bg-slate-900 dark:bg-slate-950 p-4 rounded-lg overflow-x-auto;
+  }
+
+  .prose pre code {
+    @apply bg-transparent p-0 text-sm;
+  }
+
+  .prose img {
+    @apply rounded-lg;
+  }
+
+  .prose table {
+    @apply border-collapse border border-border;
+  }
+
+  .prose th,
+  .prose td {
+    @apply border border-border px-4 py-2;
+  }
+
+  .prose th {
+    @apply bg-muted font-semibold;
+  }
+
+  /* Focus styles */
+  .focus-ring {
+    @apply focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:ring-offset-background;
+  }
+
+  /* Animation utilities */
+  .animate-fade-in {
+    animation: fadeIn 0.3s ease-in-out;
+  }
+
+  .animate-slide-up {
+    animation: slideUp 0.3s ease-out;
+  }
+
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+
+  @keyframes slideUp {
+    from {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  /* Typography scale */
+  .text-hero {
+    @apply text-4xl lg:text-5xl font-bold leading-tight;
+  }
+
+  .text-display {
+    @apply text-3xl lg:text-4xl font-bold;
+  }
+
+  .text-heading {
+    @apply text-2xl lg:text-3xl font-bold;
+  }
+
+  .text-title {
+    @apply text-xl font-semibold;
+  }
+
+  .text-body {
+    @apply text-base leading-relaxed;
+  }
+
+  .text-caption {
+    @apply text-sm text-muted-foreground;
+  }
+
+  /* Loading states */
+  .loading-skeleton {
+    @apply bg-muted animate-pulse rounded;
+  }
+
+  /* Responsive utilities */
+  .container-padding {
+    @apply px-4 sm:px-6 lg:px-8;
+  }
+
+  .section-spacing {
+    @apply py-12 lg:py-16;
+  }
+
+  /* Button variants */
+  .btn-gradient {
+    @apply bg-gradient-to-r from-primary to-accent text-white hover:from-primary/90 hover:to-accent/90;
+  }
+
+  /* Card styling */
+  .card-elevated {
+    @apply bg-card border border-border shadow-sm hover:shadow-md transition-shadow duration-200;
+  }
+
+  /* Tech-themed colors */
+  .text-tech-ai {
+    color: #8B5CF6;
+  }
+
+  .text-tech-backend {
+    color: #10B981;
+  }
+
+  .text-tech-frontend {
+    color: #3B82F6;
+  }
+
+  .text-tech-hosting {
+    color: #F59E0B;
+  }
+
+  .bg-tech-ai {
+    background-color: #8B5CF6;
+  }
+
+  .bg-tech-backend {
+    background-color: #10B981;
+  }
+
+  .bg-tech-frontend {
+    background-color: #3B82F6;
+  }
+
+  .bg-tech-hosting {
+    background-color: #F59E0B;
+  }
+}
