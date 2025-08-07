@@ -115,12 +115,13 @@ export function BlogPostCard({ post, featured = false }: BlogPostCardProps) {
               </span>
             </div>
             
-            <Link href={`/post/${post.slug}`}>
-              <a>
-                <h2 className="text-xl font-bold text-secondary dark:text-white mb-3 hover:text-primary transition-colors">
-                  {post.title}
-                </h2>
-              </a>
+            <Link 
+              href={`/post/${post.slug}`}
+              className="block"
+            >
+              <h2 className="text-xl font-bold text-secondary dark:text-white mb-3 hover:text-primary transition-colors">
+                {post.title}
+              </h2>
             </Link>
             
             <p className="text-gray-600 dark:text-gray-300 mb-4 line-clamp-3">
@@ -157,11 +158,12 @@ export function BlogPostCard({ post, featured = false }: BlogPostCardProps) {
                   <span>{post.likes}</span>
                 </Button>
                 
-                <Link href={`/post/${post.slug}#comments`}>
-                  <a className="flex items-center space-x-1 hover:text-primary transition-colors">
-                    <MessageCircle size={16} />
-                    <span>{post.commentsCount}</span>
-                  </a>
+                <Link 
+                  href={`/post/${post.slug}#comments`}
+                  className="flex items-center space-x-1 hover:text-primary transition-colors"
+                >
+                  <MessageCircle size={16} />
+                  <span>{post.commentsCount}</span>
                 </Link>
                 
                 <Button
@@ -200,12 +202,13 @@ export function BlogPostCard({ post, featured = false }: BlogPostCardProps) {
           </span>
         </div>
         
-        <Link href={`/post/${post.slug}`}>
-          <a>
-            <h2 className="text-xl font-bold text-secondary dark:text-white mb-3 hover:text-primary transition-colors">
-              {post.title}
-            </h2>
-          </a>
+        <Link 
+          href={`/post/${post.slug}`}
+          className="block"
+        >
+          <h2 className="text-xl font-bold text-secondary dark:text-white mb-3 hover:text-primary transition-colors">
+            {post.title}
+          </h2>
         </Link>
         
         <p className="text-gray-600 dark:text-gray-300 mb-4">
@@ -242,11 +245,12 @@ export function BlogPostCard({ post, featured = false }: BlogPostCardProps) {
               <span>{post.likes}</span>
             </Button>
             
-            <Link href={`/post/${post.slug}#comments`}>
-              <a className="flex items-center space-x-1 hover:text-primary transition-colors">
-                <MessageCircle size={16} />
-                <span>{post.commentsCount}</span>
-              </a>
+            <Link 
+              href={`/post/${post.slug}#comments`}
+              className="flex items-center space-x-1 hover:text-primary transition-colors"
+            >
+              <MessageCircle size={16} />
+              <span>{post.commentsCount}</span>
             </Link>
             
             <Button

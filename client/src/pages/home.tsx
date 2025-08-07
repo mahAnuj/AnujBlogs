@@ -32,18 +32,14 @@ export default function Home() {
       params.append('status', 'published');
       
       const url = `/api/posts?${params.toString()}`;
-      console.log('Fetching posts from:', url);
       
       const response = await fetch(url);
       if (!response.ok) throw new Error('Failed to fetch posts');
       
       const data = await response.json();
-      console.log('Posts fetched:', data.length, data);
       return data;
     }
   });
-
-  console.log('Render - posts data:', posts, 'isLoading:', isLoading);
 
   const { data: categories = [] } = useQuery<Category[]>({
     queryKey: ["/api/categories"],

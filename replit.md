@@ -19,11 +19,12 @@ Preferred communication style: Simple, everyday language.
 - **Theme**: Dark/light mode support with system preference detection
 
 ### Backend Architecture
-- **Runtime**: Node.js with Express.js framework
+- **Runtime**: Node.js with Express.js framework (Replit) / Vercel serverless functions (Vercel)
 - **Language**: TypeScript with ES modules
 - **API Design**: RESTful API with JSON responses
 - **File Structure**: Modular route handlers with separate storage layer abstraction
 - **Development**: Hot reloading with Vite integration in development mode
+- **Deployment**: Dual deployment support - Replit for development and Vercel for production
 
 ### Database & ORM
 - **Database**: PostgreSQL as the primary database
