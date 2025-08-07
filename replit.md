@@ -27,11 +27,12 @@ Preferred communication style: Simple, everyday language.
 - **Deployment**: Dual deployment support - Replit for development and Vercel for production
 
 ### Database & ORM
-- **Database**: PostgreSQL as the primary database
+- **Database**: PostgreSQL as the primary database (Neon for production)
 - **ORM**: Drizzle ORM for type-safe database operations and migrations
 - **Schema**: Well-structured schema with users, posts, categories, tags, and comments
 - **Relationships**: Proper foreign key relationships between entities
-- **Storage Layer**: Abstracted storage interface with in-memory implementation for development
+- **Storage Layer**: Abstracted storage interface with PostgreSQL implementation for production
+- **Deployment**: Dual storage - PostgreSQL for production (api/_lib/), in-memory for development (server/)
 
 ### Authentication & Authorization
 - **Current State**: Basic user structure in place but no authentication implemented
@@ -53,8 +54,8 @@ Preferred communication style: Simple, everyday language.
 ## External Dependencies
 
 ### Cloud Services
-- **Google Cloud Storage**: File upload and media storage service
 - **Neon Database**: PostgreSQL hosting service (via @neondatabase/serverless)
+- **Vercel**: Production deployment platform with serverless functions
 
 ### UI Libraries
 - **Radix UI**: Unstyled, accessible UI primitives for complex components

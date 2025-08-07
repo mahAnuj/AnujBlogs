@@ -57,12 +57,32 @@ All API routes work as serverless functions on Vercel:
 - ✅ Sample blog content included
 - ✅ In-memory storage (auto-initializes with sample data)
 
-## Storage
+## Database Setup
 
-Currently uses in-memory storage that initializes with sample blog posts on each serverless function cold start. For production, you would typically:
+The project now uses PostgreSQL with Neon database for production:
 
-1. Connect to a database (PostgreSQL, MongoDB, etc.)
-2. Update the storage implementation in `server/storage.ts`
-3. Add database connection environment variables
+### Environment Variables Required
 
-The current implementation is perfect for demos and development.
+Add these to your Vercel project:
+
+```
+DATABASE_URL=postgresql://username:password@hostname:5432/database
+```
+
+### Database Structure
+
+The application uses:
+- **api/_lib/db.ts** - Database connection using Neon serverless
+- **api/_lib/storage.ts** - Database operations with Drizzle ORM
+- **api/_lib/seed.ts** - Sample data initialization
+- **shared/schema.ts** - Type-safe database schema
+
+### Database Features
+
+- ✅ Automatic schema creation with `npm run db:push`
+- ✅ Sample data seeding on first startup
+- ✅ Full blog functionality (posts, categories, tags, comments)
+- ✅ Type-safe queries with Drizzle ORM
+- ✅ Optimized for serverless environments
+
+The database automatically initializes with 4 sample blog posts covering AI/LLM, Frontend, Backend, and Hosting topics.
