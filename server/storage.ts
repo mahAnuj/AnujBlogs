@@ -116,6 +116,1240 @@ export class MemStorage implements IStorage {
     ];
 
     tags.forEach(tag => this.tags.set(tag.id, tag));
+
+    // Create sample blog posts
+    const samplePosts: Post[] = [
+      {
+        id: "post-1",
+        title: "Building Intelligent Apps with OpenAI GPT-4 and LangChain",
+        slug: "building-intelligent-apps-openai-gpt4-langchain",
+        excerpt: "Learn how to create powerful AI applications using GPT-4, LangChain, and modern development practices. This comprehensive guide covers everything from setup to deployment.",
+        content: `# Building Intelligent Apps with OpenAI GPT-4 and LangChain
+
+The rise of Large Language Models (LLMs) has revolutionized how we think about building applications. With tools like OpenAI's GPT-4 and LangChain, developers can now create sophisticated AI-powered applications with relative ease.
+
+## Getting Started with LangChain
+
+LangChain is a framework designed to simplify the development of applications using language models. It provides:
+
+- **Prompt Templates**: Reusable templates for consistent prompt engineering
+- **Chains**: Sequences of calls to LLMs or other utilities
+- **Memory**: Stateful conversations and context management
+- **Agents**: LLM-driven decision making
+
+\`\`\`typescript
+import { ChatOpenAI } from "langchain/chat_models/openai";
+import { HumanMessage } from "langchain/schema";
+
+const chat = new ChatOpenAI({
+  openAIApiKey: process.env.OPENAI_API_KEY,
+  modelName: "gpt-4",
+  temperature: 0.7,
+});
+
+const response = await chat.call([
+  new HumanMessage("Explain quantum computing in simple terms")
+]);
+\`\`\`
+
+## Advanced Features
+
+### Vector Embeddings and Semantic Search
+
+One of the most powerful features is the ability to work with vector embeddings:
+
+\`\`\`python
+from langchain.embeddings import OpenAIEmbeddings
+from langchain.vectorstores import Chroma
+from langchain.document_loaders import TextLoader
+
+# Load documents
+loader = TextLoader('documents.txt')
+documents = loader.load()
+
+# Create embeddings
+embeddings = OpenAIEmbeddings()
+db = Chroma.from_documents(documents, embeddings)
+
+# Semantic search
+docs = db.similarity_search("What is machine learning?")
+\`\`\`
+
+### Building Conversational Agents
+
+Creating intelligent chatbots has never been easier:
+
+\`\`\`typescript
+import { ConversationChain } from "langchain/chains";
+import { BufferMemory } from "langchain/memory";
+
+const memory = new BufferMemory();
+const chain = new ConversationChain({
+  llm: chat,
+  memory: memory,
+});
+
+// Stateful conversation
+await chain.call({ input: "Hi, I'm building a web app" });
+await chain.call({ input: "What frontend framework should I use?" });
+\`\`\`
+
+## Best Practices
+
+1. **Prompt Engineering**: Craft clear, specific prompts
+2. **Error Handling**: Always handle API failures gracefully
+3. **Rate Limiting**: Respect API rate limits
+4. **Cost Optimization**: Monitor token usage and costs
+5. **Security**: Never expose API keys client-side
+
+## Deployment Considerations
+
+When deploying AI-powered applications, consider:
+
+- **Latency**: LLM calls can be slow, implement proper loading states
+- **Caching**: Cache responses where appropriate
+- **Monitoring**: Track usage, costs, and performance
+- **Fallbacks**: Have backup plans when the AI service is unavailable
+
+The combination of GPT-4 and LangChain opens up incredible possibilities for building intelligent applications. Start experimenting today!`,
+        featuredImage: null,
+        authorId: "user-1",
+        categoryId: "cat-1",
+        tags: ["typescript", "ai", "gpt4", "langchain"],
+        status: "published",
+        readTime: 8,
+        views: 156,
+        likes: 23,
+        metaTitle: "Building AI Apps with GPT-4 and LangChain | TechStack Blog",
+        metaDescription: "Learn how to create powerful AI applications using GPT-4, LangChain, and modern development practices. Complete guide with code examples.",
+        publishedAt: new Date("2024-01-15T10:00:00Z"),
+        createdAt: new Date("2024-01-15T10:00:00Z"),
+        updatedAt: new Date("2024-01-15T10:00:00Z"),
+      },
+      {
+        id: "post-2",
+        title: "Modern Backend Architecture: From Monolith to Microservices",
+        slug: "modern-backend-architecture-monolith-microservices",
+        excerpt: "Explore the evolution of backend architecture patterns, from traditional monoliths to modern microservices. Learn when and how to make the transition.",
+        content: `# Modern Backend Architecture: From Monolith to Microservices
+
+The backend architecture landscape has evolved dramatically over the past decade. Understanding when and how to transition from monolithic architectures to microservices is crucial for building scalable applications.
+
+## Understanding Monolithic Architecture
+
+A monolithic architecture packages the entire application as a single deployable unit:
+
+\`\`\`
+┌─────────────────────────┐
+│    Monolithic App       │
+├─────────────────────────┤
+│  UI Layer              │
+│  Business Logic        │
+│  Data Access Layer     │
+│  Database              │
+└─────────────────────────┘
+\`\`\`
+
+### Advantages of Monoliths
+
+- **Simplicity**: Easy to develop, test, and deploy initially
+- **Performance**: No network latency between components
+- **Consistency**: Single codebase and technology stack
+- **Debugging**: Easier to trace issues across the entire application
+
+### Node.js Monolith Example
+
+\`\`\`typescript
+// app.ts - Express.js monolith
+import express from 'express';
+import { userRoutes } from './routes/users';
+import { orderRoutes } from './routes/orders';
+import { paymentRoutes } from './routes/payments';
+
+const app = express();
+
+app.use('/api/users', userRoutes);
+app.use('/api/orders', orderRoutes);
+app.use('/api/payments', paymentRoutes);
+
+app.listen(3000, () => {
+  console.log('Monolith running on port 3000');
+});
+\`\`\`
+
+## Transitioning to Microservices
+
+Microservices break down the application into smaller, independently deployable services:
+
+\`\`\`
+┌──────────────┐  ┌──────────────┐  ┌──────────────┐
+│ User Service │  │Order Service │  │Payment Service│
+├──────────────┤  ├──────────────┤  ├──────────────┤
+│   Database   │  │   Database   │  │   Database   │
+└──────────────┘  └──────────────┘  └──────────────┘
+\`\`\`
+
+### When to Consider Microservices
+
+1. **Team Size**: When you have multiple teams working on different features
+2. **Scalability**: Different components have varying load requirements
+3. **Technology Diversity**: Need different tech stacks for different services
+4. **Independent Deployment**: Want to deploy features independently
+
+### Microservice Implementation
+
+\`\`\`typescript
+// user-service/server.ts
+import express from 'express';
+import { connectDatabase } from './database';
+
+const app = express();
+
+app.get('/users/:id', async (req, res) => {
+  const user = await userRepository.findById(req.params.id);
+  res.json(user);
+});
+
+app.listen(3001, () => {
+  console.log('User service running on port 3001');
+});
+\`\`\`
+
+## Communication Patterns
+
+### Synchronous Communication
+
+\`\`\`typescript
+// API Gateway pattern
+import axios from 'axios';
+
+class OrderService {
+  async createOrder(orderData: OrderData) {
+    // Call user service
+    const user = await axios.get(\`\${USER_SERVICE}/users/\${orderData.userId}\`);
+    
+    // Call payment service
+    const payment = await axios.post(\`\${PAYMENT_SERVICE}/charge\`, {
+      amount: orderData.total,
+      customerId: user.data.id
+    });
+    
+    // Create order
+    return this.orderRepository.create({
+      ...orderData,
+      paymentId: payment.data.id
+    });
+  }
+}
+\`\`\`
+
+### Asynchronous Communication
+
+\`\`\`typescript
+// Event-driven architecture with Redis
+import Redis from 'ioredis';
+
+const redis = new Redis(process.env.REDIS_URL);
+
+// Publisher
+class OrderService {
+  async createOrder(orderData: OrderData) {
+    const order = await this.orderRepository.create(orderData);
+    
+    // Publish event
+    await redis.publish('order.created', JSON.stringify({
+      orderId: order.id,
+      userId: order.userId,
+      total: order.total
+    }));
+    
+    return order;
+  }
+}
+
+// Subscriber
+class EmailService {
+  async init() {
+    await redis.subscribe('order.created');
+    redis.on('message', this.handleOrderCreated.bind(this));
+  }
+  
+  async handleOrderCreated(channel: string, message: string) {
+    const event = JSON.parse(message);
+    await this.sendOrderConfirmation(event.userId, event.orderId);
+  }
+}
+\`\`\`
+
+## Deployment and DevOps
+
+### Docker Containerization
+
+\`\`\`dockerfile
+# Dockerfile for microservice
+FROM node:18-alpine
+
+WORKDIR /app
+COPY package*.json ./
+RUN npm ci --only=production
+
+COPY . .
+EXPOSE 3000
+
+CMD ["npm", "start"]
+\`\`\`
+
+### Kubernetes Orchestration
+
+\`\`\`yaml
+# k8s/user-service.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: user-service
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: user-service
+  template:
+    metadata:
+      labels:
+        app: user-service
+    spec:
+      containers:
+      - name: user-service
+        image: user-service:latest
+        ports:
+        - containerPort: 3000
+        env:
+        - name: DATABASE_URL
+          valueFrom:
+            secretKeyRef:
+              name: db-secret
+              key: url
+\`\`\`
+
+## Challenges and Solutions
+
+### Data Consistency
+
+- **Problem**: Distributed transactions across services
+- **Solution**: Saga pattern, eventual consistency, CQRS
+
+### Service Discovery
+
+- **Problem**: Services need to find each other
+- **Solution**: Service mesh (Istio), API Gateway, DNS-based discovery
+
+### Monitoring and Observability
+
+\`\`\`typescript
+// Distributed tracing with OpenTelemetry
+import { trace } from '@opentelemetry/api';
+
+const tracer = trace.getTracer('user-service');
+
+app.get('/users/:id', async (req, res) => {
+  const span = tracer.startSpan('get-user');
+  
+  try {
+    const user = await userRepository.findById(req.params.id);
+    span.setAttributes({ 'user.id': user.id });
+    res.json(user);
+  } catch (error) {
+    span.recordException(error);
+    throw error;
+  } finally {
+    span.end();
+  }
+});
+\`\`\`
+
+## Migration Strategy
+
+1. **Start with a monolith** for new projects
+2. **Identify service boundaries** based on business domains
+3. **Extract services gradually** using the Strangler Fig pattern
+4. **Implement proper monitoring** before and during migration
+5. **Maintain data consistency** throughout the transition
+
+The key to successful backend architecture is choosing the right pattern for your specific needs and scaling requirements.`,
+        featuredImage: null,
+        authorId: "user-1",
+        categoryId: "cat-2",
+        tags: ["nodejs", "microservices", "architecture", "backend"],
+        status: "published",
+        readTime: 12,
+        views: 289,
+        likes: 47,
+        metaTitle: "Modern Backend Architecture Guide | Monolith to Microservices",
+        metaDescription: "Complete guide to backend architecture patterns. Learn when and how to transition from monoliths to microservices with practical examples.",
+        publishedAt: new Date("2024-01-10T14:00:00Z"),
+        createdAt: new Date("2024-01-10T14:00:00Z"),
+        updatedAt: new Date("2024-01-10T14:00:00Z"),
+      },
+      {
+        id: "post-3", 
+        title: "React 18 Performance Optimization: Advanced Techniques",
+        slug: "react-18-performance-optimization-advanced-techniques",
+        excerpt: "Master React 18's latest performance features including Concurrent Features, Suspense, and advanced optimization patterns for lightning-fast applications.",
+        content: `# React 18 Performance Optimization: Advanced Techniques
+
+React 18 introduced powerful performance features that can dramatically improve your application's user experience. Let's explore advanced techniques to make your React apps lightning fast.
+
+## Concurrent Features
+
+React 18's Concurrent Features allow React to pause, resume, and reprioritize work:
+
+\`\`\`tsx
+import { startTransition, useDeferredValue } from 'react';
+
+function SearchResults({ query }: { query: string }) {
+  // Defer expensive computations
+  const deferredQuery = useDeferredValue(query);
+  const results = useMemo(() => 
+    performExpensiveSearch(deferredQuery), [deferredQuery]
+  );
+
+  return (
+    <div>
+      {results.map(result => (
+        <ResultItem key={result.id} item={result} />
+      ))}
+    </div>
+  );
+}
+
+function App() {
+  const [query, setQuery] = useState('');
+
+  const handleSearch = (newQuery: string) => {
+    // Mark as non-urgent transition
+    startTransition(() => {
+      setQuery(newQuery);
+    });
+  };
+
+  return (
+    <div>
+      <input onChange={(e) => handleSearch(e.target.value)} />
+      <SearchResults query={query} />
+    </div>
+  );
+}
+\`\`\`
+
+## Advanced Suspense Patterns
+
+Suspense isn't just for code splitting - it's a powerful tool for data fetching:
+
+\`\`\`tsx
+import { Suspense } from 'react';
+
+// Resource pattern for Suspense
+function createResource<T>(promise: Promise<T>) {
+  let status = 'pending';
+  let result: T;
+  let suspender = promise.then(
+    (r) => {
+      status = 'success';
+      result = r;
+    },
+    (e) => {
+      status = 'error';
+      result = e;
+    }
+  );
+  
+  return {
+    read() {
+      if (status === 'pending') {
+        throw suspender;
+      } else if (status === 'error') {
+        throw result;
+      } else if (status === 'success') {
+        return result;
+      }
+    }
+  };
+}
+
+// Usage
+const userResource = createResource(fetchUser(userId));
+
+function UserProfile() {
+  const user = userResource.read();
+  
+  return (
+    <div>
+      <h1>{user.name}</h1>
+      <p>{user.email}</p>
+    </div>
+  );
+}
+
+function App() {
+  return (
+    <Suspense fallback={<UserProfileSkeleton />}>
+      <UserProfile />
+    </Suspense>
+  );
+}
+\`\`\`
+
+## Optimized State Management
+
+### Using Zustand for Performance
+
+\`\`\`tsx
+import { create } from 'zustand';
+import { subscribeWithSelector } from 'zustand/middleware';
+
+interface Store {
+  users: User[];
+  filters: FilterState;
+  updateFilter: (key: string, value: any) => void;
+  filteredUsers: User[];
+}
+
+const useStore = create<Store>()(
+  subscribeWithSelector((set, get) => ({
+    users: [],
+    filters: { search: '', category: 'all' },
+    updateFilter: (key, value) =>
+      set(state => ({
+        filters: { ...state.filters, [key]: value }
+      })),
+    get filteredUsers() {
+      const { users, filters } = get();
+      return users.filter(user => 
+        user.name.includes(filters.search) &&
+        (filters.category === 'all' || user.category === filters.category)
+      );
+    }
+  }))
+);
+
+// Subscribe to specific slices
+function UserList() {
+  const filteredUsers = useStore(state => state.filteredUsers);
+  
+  return (
+    <div>
+      {filteredUsers.map(user => (
+        <UserCard key={user.id} user={user} />
+      ))}
+    </div>
+  );
+}
+\`\`\`
+
+## Virtual Scrolling for Large Lists
+
+\`\`\`tsx
+import { FixedSizeList as List } from 'react-window';
+
+interface VirtualizedListProps {
+  items: any[];
+  itemHeight: number;
+  height: number;
+}
+
+function VirtualizedList({ items, itemHeight, height }: VirtualizedListProps) {
+  const Row = ({ index, style }: { index: number; style: React.CSSProperties }) => (
+    <div style={style}>
+      <ItemComponent item={items[index]} />
+    </div>
+  );
+
+  return (
+    <List
+      height={height}
+      itemCount={items.length}
+      itemSize={itemHeight}
+      width="100%"
+    >
+      {Row}
+    </List>
+  );
+}
+
+// For dynamic heights
+import { VariableSizeList } from 'react-window';
+
+function DynamicVirtualizedList({ items }: { items: any[] }) {
+  const getItemSize = (index: number) => {
+    // Calculate dynamic height based on content
+    return items[index].content.length > 100 ? 120 : 80;
+  };
+
+  return (
+    <VariableSizeList
+      height={600}
+      itemCount={items.length}
+      itemSize={getItemSize}
+      width="100%"
+    >
+      {Row}
+    </VariableSizeList>
+  );
+}
+\`\`\`
+
+## Memory Optimization Techniques
+
+### Avoiding Memory Leaks
+
+\`\`\`tsx
+function OptimizedComponent() {
+  const [data, setData] = useState(null);
+  const abortControllerRef = useRef<AbortController>();
+
+  useEffect(() => {
+    // Create new abort controller for each request
+    abortControllerRef.current = new AbortController();
+    
+    fetchData({ signal: abortControllerRef.current.signal })
+      .then(setData)
+      .catch(error => {
+        if (error.name !== 'AbortError') {
+          console.error(error);
+        }
+      });
+
+    // Cleanup function
+    return () => {
+      abortControllerRef.current?.abort();
+    };
+  }, []);
+
+  return <div>{data && <DataDisplay data={data} />}</div>;
+}
+\`\`\`
+
+### Optimized Image Loading
+
+\`\`\`tsx
+import { useState, useRef, useEffect } from 'react';
+
+function LazyImage({ src, alt, placeholder }: {
+  src: string;
+  alt: string;
+  placeholder: string;
+}) {
+  const [isLoaded, setIsLoaded] = useState(false);
+  const [isInView, setIsInView] = useState(false);
+  const imgRef = useRef<HTMLImageElement>(null);
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setIsInView(true);
+          observer.disconnect();
+        }
+      },
+      { threshold: 0.1 }
+    );
+
+    if (imgRef.current) {
+      observer.observe(imgRef.current);
+    }
+
+    return () => observer.disconnect();
+  }, []);
+
+  return (
+    <div ref={imgRef} className="image-container">
+      {isInView && (
+        <>
+          <img
+            src={src}
+            alt={alt}
+            onLoad={() => setIsLoaded(true)}
+            style={{ opacity: isLoaded ? 1 : 0 }}
+          />
+          {!isLoaded && (
+            <img src={placeholder} alt="" className="placeholder" />
+          )}
+        </>
+      )}
+    </div>
+  );
+}
+\`\`\`
+
+## Bundle Optimization
+
+### Code Splitting with React.lazy
+
+\`\`\`tsx
+import { lazy, Suspense } from 'react';
+
+// Route-based code splitting
+const Dashboard = lazy(() => import('./pages/Dashboard'));
+const Profile = lazy(() => import('./pages/Profile'));
+const Settings = lazy(() => import('./pages/Settings'));
+
+// Component-based code splitting
+const HeavyChart = lazy(() => import('./components/HeavyChart'));
+
+function App() {
+  return (
+    <Router>
+      <Suspense fallback={<PageSkeleton />}>
+        <Routes>
+          <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/profile" element={<Profile />} />
+          <Route path="/settings" element={<Settings />} />
+        </Routes>
+      </Suspense>
+    </Router>
+  );
+}
+
+// Conditional loading
+function DataVisualization({ showChart }: { showChart: boolean }) {
+  return (
+    <div>
+      {showChart && (
+        <Suspense fallback={<ChartSkeleton />}>
+          <HeavyChart />
+        </Suspense>
+      )}
+    </div>
+  );
+}
+\`\`\`
+
+## Performance Monitoring
+
+### Core Web Vitals Tracking
+
+\`\`\`tsx
+import { getCLS, getFID, getFCP, getLCP, getTTFB } from 'web-vitals';
+
+function reportWebVitals() {
+  getCLS(console.log);
+  getFID(console.log);
+  getFCP(console.log);
+  getLCP(console.log);
+  getTTFB(console.log);
+}
+
+// React 18 specific metrics
+import { onCLS, onFID, onLCP } from 'web-vitals';
+
+function setupPerformanceMonitoring() {
+  onCLS(metric => {
+    // Track Cumulative Layout Shift
+    analytics.track('CLS', metric);
+  });
+  
+  onFID(metric => {
+    // Track First Input Delay
+    analytics.track('FID', metric);
+  });
+  
+  onLCP(metric => {
+    // Track Largest Contentful Paint
+    analytics.track('LCP', metric);
+  });
+}
+\`\`\`
+
+## Production Optimization Checklist
+
+1. **Enable React 18 Concurrent Features**
+2. **Implement proper code splitting**
+3. **Use React.memo strategically**
+4. **Optimize bundle size with tree shaking**
+5. **Implement virtual scrolling for large lists**
+6. **Use Suspense for data fetching**
+7. **Monitor Core Web Vitals**
+8. **Implement proper error boundaries**
+
+React 18's performance features are game-changers when used correctly. Start implementing these patterns gradually for maximum impact.`,
+        featuredImage: null,
+        authorId: "user-1",
+        categoryId: "cat-3",
+        tags: ["react", "typescript", "performance", "frontend"],
+        status: "published",
+        readTime: 10,
+        views: 342,
+        likes: 67,
+        metaTitle: "React 18 Performance Optimization Guide | Advanced Techniques",
+        metaDescription: "Master React 18's performance features including Concurrent Features, Suspense, and optimization patterns for lightning-fast applications.",
+        publishedAt: new Date("2024-01-08T16:00:00Z"),
+        createdAt: new Date("2024-01-08T16:00:00Z"),
+        updatedAt: new Date("2024-01-08T16:00:00Z"),
+      },
+      {
+        id: "post-4",
+        title: "Deploying Full-Stack Apps on Replit: Complete Guide",
+        slug: "deploying-fullstack-apps-replit-complete-guide",
+        excerpt: "Learn how to deploy modern full-stack applications on Replit with databases, environment variables, custom domains, and production-ready configurations.",
+        content: `# Deploying Full-Stack Apps on Replit: Complete Guide
+
+Replit has evolved into a powerful platform for hosting production applications. This guide covers everything you need to deploy full-stack apps with confidence.
+
+## Why Choose Replit for Deployment?
+
+Replit offers several advantages for modern web applications:
+
+- **Zero Configuration**: Deploy with a single click
+- **Integrated Database**: Built-in PostgreSQL support
+- **Automatic HTTPS**: SSL certificates included
+- **Global CDN**: Fast content delivery worldwide
+- **Real-time Collaboration**: Share and collaborate easily
+
+## Project Setup and Structure
+
+### Recommended Project Structure
+
+\`\`\`
+my-fullstack-app/
+├── client/
+│   ├── src/
+│   ├── public/
+│   ├── package.json
+│   └── vite.config.ts
+├── server/
+│   ├── routes/
+│   ├── models/
+│   ├── middleware/
+│   └── index.ts
+├── shared/
+│   └── types.ts
+├── package.json
+├── .replit
+└── replit.nix
+\`\`\`
+
+### Package.json Configuration
+
+\`\`\`json
+{
+  "name": "fullstack-app",
+  "scripts": {
+    "dev": "concurrently \\"npm run server:dev\\" \\"npm run client:dev\\"",
+    "server:dev": "tsx watch server/index.ts",
+    "client:dev": "cd client && npm run dev",
+    "build": "cd client && npm run build && cd .. && npm run server:build",
+    "server:build": "tsx server/index.ts",
+    "start": "node dist/server.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "cors": "^2.8.5",
+    "dotenv": "^16.0.3"
+  },
+  "devDependencies": {
+    "concurrently": "^7.6.0",
+    "tsx": "^3.12.0",
+    "@types/node": "^18.15.0"
+  }
+}
+\`\`\`
+
+## Replit Configuration Files
+
+### .replit Configuration
+
+\`\`\`toml
+# .replit
+modules = ["nodejs-20"]
+
+[nix]
+channel = "stable-23_11"
+
+[deployment]
+run = ["sh", "-c", "npm run build && npm start"]
+deploymentTarget = "cloudrun"
+ignorePorts = false
+
+[[ports]]
+localPort = 3000
+externalPort = 80
+exposeLocalhost = true
+
+[env]
+NODE_ENV = "production"
+PORT = "3000"
+\`\`\`
+
+### Nix Configuration
+
+\`\`\`nix
+# replit.nix
+{pkgs}: {
+  deps = [
+    pkgs.nodejs-20_x
+    pkgs.npm-9_x
+    pkgs.postgresql
+  ];
+}
+\`\`\`
+
+## Database Integration
+
+### PostgreSQL Setup
+
+Replit provides managed PostgreSQL databases:
+
+\`\`\`typescript
+// server/database.ts
+import { Pool } from 'pg';
+
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+  ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false
+});
+
+export default pool;
+\`\`\`
+
+### Database Migrations
+
+\`\`\`typescript
+// server/migrations/001_create_tables.ts
+import pool from '../database';
+
+export async function up() {
+  await pool.query(\`
+    CREATE TABLE IF NOT EXISTS users (
+      id SERIAL PRIMARY KEY,
+      email VARCHAR(255) UNIQUE NOT NULL,
+      name VARCHAR(255) NOT NULL,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    );
+  \`);
+  
+  await pool.query(\`
+    CREATE TABLE IF NOT EXISTS posts (
+      id SERIAL PRIMARY KEY,
+      title VARCHAR(255) NOT NULL,
+      content TEXT NOT NULL,
+      user_id INTEGER REFERENCES users(id),
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    );
+  \`);
+}
+
+export async function down() {
+  await pool.query('DROP TABLE IF EXISTS posts');
+  await pool.query('DROP TABLE IF EXISTS users');
+}
+\`\`\`
+
+## Environment Variables and Secrets
+
+### Managing Secrets
+
+\`\`\`typescript
+// server/config.ts
+interface Config {
+  port: number;
+  databaseUrl: string;
+  jwtSecret: string;
+  nodeEnv: string;
+}
+
+const config: Config = {
+  port: parseInt(process.env.PORT || '3000'),
+  databaseUrl: process.env.DATABASE_URL!,
+  jwtSecret: process.env.JWT_SECRET!,
+  nodeEnv: process.env.NODE_ENV || 'development'
+};
+
+export default config;
+\`\`\`
+
+### Client-Side Environment Variables
+
+\`\`\`typescript
+// client/src/config.ts
+export const config = {
+  apiUrl: import.meta.env.VITE_API_URL || '/api',
+  appName: import.meta.env.VITE_APP_NAME || 'My App'
+};
+\`\`\`
+
+## API Routes and Middleware
+
+### Express Server Setup
+
+\`\`\`typescript
+// server/index.ts
+import express from 'express';
+import cors from 'cors';
+import path from 'path';
+import { fileURLToPath } from 'url';
+import apiRoutes from './routes/api';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+const app = express();
+const PORT = process.env.PORT || 3000;
+
+// Middleware
+app.use(cors());
+app.use(express.json());
+app.use(express.static(path.join(__dirname, '../client/dist')));
+
+// API Routes
+app.use('/api', apiRoutes);
+
+// Serve React app for all other routes
+app.get('*', (req, res) => {
+  res.sendFile(path.join(__dirname, '../client/dist/index.html'));
+});
+
+app.listen(PORT, '0.0.0.0', () => {
+  console.log(\`Server running on port \${PORT}\`);
+});
+\`\`\`
+
+### API Route Example
+
+\`\`\`typescript
+// server/routes/api.ts
+import express from 'express';
+import pool from '../database';
+
+const router = express.Router();
+
+// Get all posts
+router.get('/posts', async (req, res) => {
+  try {
+    const result = await pool.query(\`
+      SELECT p.*, u.name as author_name 
+      FROM posts p 
+      JOIN users u ON p.user_id = u.id 
+      ORDER BY p.created_at DESC
+    \`);
+    res.json(result.rows);
+  } catch (error) {
+    console.error('Error fetching posts:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// Create new post
+router.post('/posts', async (req, res) => {
+  const { title, content, userId } = req.body;
+  
+  try {
+    const result = await pool.query(
+      'INSERT INTO posts (title, content, user_id) VALUES ($1, $2, $3) RETURNING *',
+      [title, content, userId]
+    );
+    res.status(201).json(result.rows[0]);
+  } catch (error) {
+    console.error('Error creating post:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+export default router;
+\`\`\`
+
+## Frontend Build Configuration
+
+### Vite Configuration
+
+\`\`\`typescript
+// client/vite.config.ts
+import { defineConfig } from 'vite';
+import react from '@vitejs/plugin-react';
+import path from 'path';
+
+export default defineConfig({
+  plugins: [react()],
+  resolve: {
+    alias: {
+      '@': path.resolve(__dirname, './src'),
+    },
+  },
+  build: {
+    outDir: 'dist',
+    sourcemap: false,
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          vendor: ['react', 'react-dom'],
+          router: ['react-router-dom'],
+        },
+      },
+    },
+  },
+  server: {
+    proxy: {
+      '/api': {
+        target: 'http://localhost:3000',
+        changeOrigin: true,
+      },
+    },
+  },
+});
+\`\`\`
+
+## Production Optimizations
+
+### Performance Monitoring
+
+\`\`\`typescript
+// server/middleware/monitoring.ts
+import { Request, Response, NextFunction } from 'express';
+
+export function requestLogger(req: Request, res: Response, next: NextFunction) {
+  const start = Date.now();
+  
+  res.on('finish', () => {
+    const duration = Date.now() - start;
+    console.log(\`\${req.method} \${req.url} - \${res.statusCode} - \${duration}ms\`);
+  });
+  
+  next();
+}
+
+export function errorHandler(err: Error, req: Request, res: Response, next: NextFunction) {
+  console.error('Error:', err);
+  
+  if (process.env.NODE_ENV === 'production') {
+    res.status(500).json({ error: 'Something went wrong' });
+  } else {
+    res.status(500).json({ error: err.message, stack: err.stack });
+  }
+}
+\`\`\`
+
+### Caching Strategy
+
+\`\`\`typescript
+// server/middleware/cache.ts
+import { Request, Response, NextFunction } from 'express';
+
+export function cacheControl(maxAge: number) {
+  return (req: Request, res: Response, next: NextFunction) => {
+    res.set('Cache-Control', \`public, max-age=\${maxAge}\`);
+    next();
+  };
+}
+
+// Usage
+app.use('/api/posts', cacheControl(300)); // 5 minutes
+app.use(express.static('client/dist', { maxAge: '1y' })); // Static assets
+\`\`\`
+
+## Custom Domains and SSL
+
+### Setting Up Custom Domain
+
+1. **Purchase domain** from your preferred registrar
+2. **Add domain** in Replit deployment settings
+3. **Configure DNS** records:
+   - Add CNAME record pointing to your Replit app
+   - Wait for DNS propagation (usually 24-48 hours)
+
+\`\`\`
+Type: CNAME
+Name: www (or @)
+Value: your-app-name.repl.co
+TTL: 300
+\`\`\`
+
+## Deployment Checklist
+
+### Pre-Deployment
+
+- [ ] Environment variables configured
+- [ ] Database migrations applied
+- [ ] Build process tested locally
+- [ ] Error handling implemented
+- [ ] Security headers added
+- [ ] Performance optimizations applied
+
+### Post-Deployment
+
+- [ ] Health check endpoint working
+- [ ] Database connectivity verified
+- [ ] Custom domain configured
+- [ ] SSL certificate active
+- [ ] Performance monitoring enabled
+- [ ] Backup strategy implemented
+
+### Health Check Endpoint
+
+\`\`\`typescript
+// server/routes/health.ts
+router.get('/health', async (req, res) => {
+  try {
+    // Check database connection
+    await pool.query('SELECT 1');
+    
+    res.json({
+      status: 'healthy',
+      timestamp: new Date().toISOString(),
+      uptime: process.uptime(),
+      version: process.env.npm_package_version
+    });
+  } catch (error) {
+    res.status(503).json({
+      status: 'unhealthy',
+      error: error.message
+    });
+  }
+});
+\`\`\`
+
+## Troubleshooting Common Issues
+
+### Build Failures
+
+1. **Check dependencies**: Ensure all packages are listed in package.json
+2. **Verify Node version**: Use compatible Node.js version
+3. **Check build logs**: Review deployment logs for specific errors
+
+### Database Connection Issues
+
+\`\`\`typescript
+// Add connection retry logic
+async function connectWithRetry() {
+  for (let i = 0; i < 5; i++) {
+    try {
+      await pool.query('SELECT 1');
+      console.log('Database connected successfully');
+      return;
+    } catch (error) {
+      console.log(\`Database connection attempt \${i + 1} failed\`);
+      await new Promise(resolve => setTimeout(resolve, 5000));
+    }
+  }
+  throw new Error('Failed to connect to database after 5 attempts');
+}
+\`\`\`
+
+Replit provides an excellent platform for deploying full-stack applications with minimal configuration. Follow this guide to ensure your deployment is production-ready and scalable.`,
+        featuredImage: null,
+        authorId: "user-1",
+        categoryId: "cat-4",
+        tags: ["replit", "deployment", "hosting", "fullstack"],
+        status: "published",
+        readTime: 15,
+        views: 198,
+        likes: 31,
+        metaTitle: "Complete Guide to Deploying Full-Stack Apps on Replit",
+        metaDescription: "Learn how to deploy modern full-stack applications on Replit with databases, environment variables, and production-ready configurations.",
+        publishedAt: new Date("2024-01-05T12:00:00Z"),
+        createdAt: new Date("2024-01-05T12:00:00Z"),
+        updatedAt: new Date("2024-01-05T12:00:00Z"),
+      }
+    ];
+
+    samplePosts.forEach(post => this.posts.set(post.id, post));
   }
 
   // Users
@@ -266,7 +1500,7 @@ export class MemStorage implements IStorage {
       createdAt: now,
       updatedAt: now,
       status: insertPost.status || "draft",
-      tags: insertPost.tags || [],
+      tags: insertPost.tags ? [...insertPost.tags] : [],
       featuredImage: insertPost.featuredImage || null,
       metaTitle: insertPost.metaTitle || null,
       metaDescription: insertPost.metaDescription || null,
@@ -283,7 +1517,7 @@ export class MemStorage implements IStorage {
     const updatedPost: Post = {
       ...post,
       ...updatePost,
-      tags: updatePost.tags || post.tags,
+      tags: updatePost.tags ? [...updatePost.tags] : [...post.tags],
       updatedAt: new Date(),
     };
     this.posts.set(id, updatedPost);
