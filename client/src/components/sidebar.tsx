@@ -56,21 +56,23 @@ export function Sidebar() {
             const postCount = posts.filter((post) => post.categoryId === category.id).length;
             
             return (
-              <Link key={category.id} href={`/category/${category.slug}`}>
-                <a className="flex items-center justify-between p-3 rounded-lg hover:bg-gray-50 dark:hover:bg-slate-700 transition-colors">
-                  <div className="flex items-center space-x-3">
-                    <div
-                      className="w-3 h-3 rounded-full"
-                      style={{ backgroundColor: category.color }}
-                    />
-                    <span className="text-gray-700 dark:text-gray-300">
-                      {category.name}
-                    </span>
-                  </div>
-                  <span className="text-sm text-gray-500 dark:text-gray-400">
-                    {postCount}
+              <Link 
+                key={category.id} 
+                href={`/category/${category.slug}`}
+                className="flex items-center justify-between p-3 rounded-lg hover:bg-gray-50 dark:hover:bg-slate-700 transition-colors"
+              >
+                <div className="flex items-center space-x-3">
+                  <div
+                    className="w-3 h-3 rounded-full"
+                    style={{ backgroundColor: category.color }}
+                  />
+                  <span className="text-gray-700 dark:text-gray-300">
+                    {category.name}
                   </span>
-                </a>
+                </div>
+                <span className="text-sm text-gray-500 dark:text-gray-400">
+                  {postCount}
+                </span>
               </Link>
             );
           })}
@@ -87,20 +89,21 @@ export function Sidebar() {
         <CardContent className="space-y-4">
           {popularPosts.map((post) => (
             <article key={post.id} className="group cursor-pointer">
-              <Link href={`/post/${post.slug}`}>
-                <a>
-                  <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 group-hover:text-primary transition-colors mb-1 line-clamp-2">
-                    {post.title}
-                  </h4>
-                  <div className="flex items-center text-xs text-gray-500 dark:text-gray-400 space-x-2">
-                    <span className="flex items-center space-x-1">
-                      <Eye size={12} />
-                      <span>{post.views} views</span>
-                    </span>
-                    <span>•</span>
-                    <span>{post.readTime} min read</span>
-                  </div>
-                </a>
+              <Link 
+                href={`/post/${post.slug}`}
+                className="block"
+              >
+                <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 group-hover:text-primary transition-colors mb-1 line-clamp-2">
+                  {post.title}
+                </h4>
+                <div className="flex items-center text-xs text-gray-500 dark:text-gray-400 space-x-2">
+                  <span className="flex items-center space-x-1">
+                    <Eye size={12} />
+                    <span>{post.views} views</span>
+                  </span>
+                  <span>•</span>
+                  <span>{post.readTime} min read</span>
+                </div>
               </Link>
             </article>
           ))}

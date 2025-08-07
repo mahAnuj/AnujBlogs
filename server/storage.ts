@@ -1517,7 +1517,7 @@ Replit provides an excellent platform for deploying full-stack applications with
     const updatedPost: Post = {
       ...post,
       ...updatePost,
-      tags: updatePost.tags ? [...updatePost.tags] : [...post.tags],
+      tags: updatePost.tags ? [...updatePost.tags] : post.tags ? [...post.tags] : [],
       updatedAt: new Date(),
     };
     this.posts.set(id, updatedPost);

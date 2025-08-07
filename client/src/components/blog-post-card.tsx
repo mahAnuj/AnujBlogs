@@ -13,12 +13,12 @@ interface BlogPostCardProps {
     title: string;
     slug: string;
     excerpt: string;
-    featuredImage?: string;
+    featuredImage?: string | null;
     readTime: number;
     views: number;
     likes: number;
     commentsCount: number;
-    publishedAt?: string;
+    publishedAt?: string | null;
     createdAt: string;
     author: {
       name: string;
