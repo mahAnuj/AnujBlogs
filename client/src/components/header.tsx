@@ -5,7 +5,7 @@ import { useTheme } from "@/hooks/use-theme";
 import { SearchBar } from "@/components/search-bar";
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
-import { Menu, X, Sun, Moon, Code } from "lucide-react";
+import { Menu, X, Sun, Moon, Code, Plus } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { Category } from "@shared/schema";
 
@@ -78,6 +78,14 @@ export function Header() {
             <div className="hidden sm:block">
               <SearchBar />
             </div>
+
+            {/* New Post Button */}
+            <Button asChild size="sm" className="hidden md:flex">
+              <Link href="/create" className="flex items-center gap-2">
+                <Plus className="h-4 w-4" />
+                New Post
+              </Link>
+            </Button>
 
             {/* Theme Toggle */}
             <Button

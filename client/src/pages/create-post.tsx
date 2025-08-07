@@ -1,45 +1,45 @@
 import { useState } from "react";
-import { useLocation } from "wouter";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
-import { Header } from "@/components/header";
-import { SEOHead } from "@/components/seo-head";
-import { RichTextEditor } from "@/components/rich-text-editor";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
+import { insertPostSchema, type Category, type Tag, type InsertPost } from "@shared/schema";
 import { apiRequest } from "@/lib/queryClient";
-import { ArrowLeft, Save, Eye, Plus, X } from "lucide-react";
-import { Link } from "wouter";
-import type { Category, Tag } from "@shared/schema";
+import ReactMarkdown from "react-markdown";
+import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
+import { tomorrow } from "react-syntax-highlighter/dist/esm/styles/prism";
+import { Eye, Plus, X, Save, FileText } from "lucide-react";
 
-const createPostSchema = z.object({
-  title: z.string().min(1, "Title is required").max(200, "Title must be under 200 characters"),
-  excerpt: z.string().min(1, "Excerpt is required").max(300, "Excerpt must be under 300 characters"),
-  content: z.string().min(1, "Content is required"),
-  categoryId: z.string().min(1, "Category is required"),
-  status: z.enum(["draft", "published"]),
-  readTime: z.number().min(1, "Read time must be at least 1 minute"),
-  metaTitle: z.string().optional(),
-  metaDescription: z.string().optional(),
-  featuredImage: z.string().url("Must be a valid URL").optional().or(z.literal("")),
-  authorId: z.string().min(1, "Author is required"),
+const createPostFormSchema = insertPostSchema.extend({
+  tags: insertPostSchema.shape.tags.optional().default([]),
 });
 
-type CreatePostForm = z.infer<typeof createPostSchema>;
+type CreatePostForm = {
+  title: string;
+  slug: string;
+  excerpt: string;
+  content: string;
+  categoryId: string;
+  tags: string[];
+  status: "draft" | "published";
+  metaTitle?: string;
+  metaDescription?: string;
+  readTime?: number;
+};
 
 export default function CreatePost() {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const [preview, setPreview] = useState(false);
   const [newTag, setNewTag] = useState("");
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
 
@@ -47,64 +47,80 @@ export default function CreatePost() {
     queryKey: ["/api/categories"],
   });
 
-  const { data: tags = [] } = useQuery<Tag[]>({
+  const { data: allTags = [] } = useQuery<Tag[]>({
     queryKey: ["/api/tags"],
   });
 
   const form = useForm<CreatePostForm>({
-    resolver: zodResolver(createPostSchema),
+    resolver: zodResolver(createPostFormSchema),
     defaultValues: {
       title: "",
+      slug: "",
       excerpt: "",
       content: "",
       categoryId: "",
+      tags: [],
       status: "draft",
-      readTime: 5,
       metaTitle: "",
       metaDescription: "",
-      featuredImage: "",
-      authorId: "user-1", // Default to the sample user
+      readTime: 5,
     },
   });
 
   const createPostMutation = useMutation({
-    mutationFn: (data: CreatePostForm & { tags: string[]; slug: string }) =>
-      apiRequest("POST", "/api/posts", data),
-    onSuccess: (response) => {
-      const postData = response.json();
+    mutationFn: async (data: CreatePostForm) => {
+      const postData: InsertPost = {
+        ...data,
+        authorId: "user-1", // In a real app, this would come from auth
+        tags: selectedTags,
+        readTime: data.readTime || estimateReadTime(data.content),
+        publishedAt: data.status === "published" ? new Date() : null,
+      };
+      const response = await fetch("/api/posts", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(postData),
+      });
+      if (!response.ok) throw new Error("Failed to create post");
+      return response.json();
+    },
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/posts"] });
       toast({
-        title: "Post created successfully!",
-        description: "Your post has been saved.",
+        title: "Success",
+        description: "Post created successfully!",
       });
-      setLocation(`/post/${response.slug || generateSlug(form.getValues("title"))}`);
+      setLocation("/");
     },
-    onError: (error: any) => {
+    onError: (error) => {
       toast({
-        title: "Error creating post",
-        description: "Please check your input and try again.",
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to create post",
         variant: "destructive",
       });
     },
   });
 
+  const onSubmit = (data: CreatePostForm) => {
+    createPostMutation.mutate(data);
+  };
+
   const generateSlug = (title: string) => {
     return title
       .toLowerCase()
-      .replace(/[^a-z0-9]+/g, "-")
-      .replace(/(^-|-$)/g, "");
+      .replace(/[^\w\s-]/g, "")
+      .replace(/\s+/g, "-")
+      .trim();
   };
 
-  const estimateReadTime = (content: string) => {
-    const wordsPerMinute = 200;
-    const wordCount = content.split(/\s+/).length;
-    return Math.max(1, Math.ceil(wordCount / wordsPerMinute));
-  };
-
-  const handleContentChange = (content: string) => {
-    form.setValue("content", content);
-    const readTime = estimateReadTime(content);
-    form.setValue("readTime", readTime);
+  const handleTitleChange = (title: string) => {
+    form.setValue("title", title);
+    if (!form.getValues("slug")) {
+      form.setValue("slug", generateSlug(title));
+    }
+    if (!form.getValues("metaTitle")) {
+      form.setValue("metaTitle", `${title} | Tech Blog`);
+    }
   };
 
   const addTag = () => {
@@ -118,346 +134,316 @@ export default function CreatePost() {
     setSelectedTags(selectedTags.filter(tag => tag !== tagToRemove));
   };
 
-  const onSubmit = (data: CreatePostForm) => {
-    const slug = generateSlug(data.title);
-    createPostMutation.mutate({
-      ...data,
-      tags: selectedTags,
-      slug,
-    });
+  const estimateReadTime = (content: string) => {
+    const wordsPerMinute = 200;
+    const wordCount = content.split(/\s+/).length;
+    return Math.max(1, Math.ceil(wordCount / wordsPerMinute));
   };
 
-  const saveDraft = () => {
-    form.setValue("status", "draft");
-    form.handleSubmit(onSubmit)();
-  };
-
-  const publish = () => {
-    form.setValue("status", "published");
-    form.handleSubmit(onSubmit)();
-  };
+  const content = form.watch("content");
+  const readTime = estimateReadTime(content);
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-slate-900 text-secondary dark:text-slate-200">
-      <SEOHead
-        title="Create New Post - TechStack Blog"
-        description="Create and publish a new blog post on TechStack Blog"
-      />
-      
-      <Header />
-      
-      <main className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        {/* Header Actions */}
-        <div className="flex items-center justify-between mb-8">
-          <Link href="/">
-            <a>
-              <Button variant="ghost" className="text-gray-600 dark:text-gray-400">
-                <ArrowLeft className="mr-2" size={16} />
-                Back to Blog
-              </Button>
-            </a>
-          </Link>
-          
-          <div className="flex items-center space-x-3">
-            <Button
-              variant="outline"
-              onClick={() => setPreview(!preview)}
-              className="flex items-center space-x-2"
-            >
-              <Eye size={16} />
-              <span>{preview ? "Edit" : "Preview"}</span>
-            </Button>
-            
-            <Button
-              onClick={saveDraft}
-              disabled={createPostMutation.isPending}
-              variant="outline"
-              className="flex items-center space-x-2"
-            >
-              <Save size={16} />
-              <span>Save Draft</span>
-            </Button>
-            
-            <Button
-              onClick={publish}
-              disabled={createPostMutation.isPending}
-              className="flex items-center space-x-2"
-            >
-              {createPostMutation.isPending ? (
-                <>
-                  <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent" />
-                  <span>Publishing...</span>
-                </>
-              ) : (
-                <>
-                  <Plus size={16} />
-                  <span>Publish Post</span>
-                </>
-              )}
-            </Button>
+    <div className="container mx-auto px-4 py-8 max-w-6xl">
+      <div className="mb-8">
+        <h1 className="text-3xl font-bold mb-2">Create New Post</h1>
+        <p className="text-muted-foreground">
+          Write and publish a new blog post with our integrated editor
+        </p>
+      </div>
+
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Main Content */}
+          <div className="lg:col-span-2 space-y-6">
+            {/* Basic Info */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <FileText className="h-5 w-5" />
+                  Basic Information
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div>
+                  <Label htmlFor="title">Title</Label>
+                  <Input
+                    id="title"
+                    {...form.register("title")}
+                    onChange={(e) => handleTitleChange(e.target.value)}
+                    placeholder="Enter post title..."
+                  />
+                  {form.formState.errors.title && (
+                    <p className="text-sm text-destructive mt-1">
+                      {form.formState.errors.title.message}
+                    </p>
+                  )}
+                </div>
+
+                <div>
+                  <Label htmlFor="slug">URL Slug</Label>
+                  <Input
+                    id="slug"
+                    {...form.register("slug")}
+                    placeholder="url-friendly-slug"
+                  />
+                  {form.formState.errors.slug && (
+                    <p className="text-sm text-destructive mt-1">
+                      {form.formState.errors.slug.message}
+                    </p>
+                  )}
+                </div>
+
+                <div>
+                  <Label htmlFor="excerpt">Excerpt</Label>
+                  <Textarea
+                    id="excerpt"
+                    {...form.register("excerpt")}
+                    placeholder="Brief description of the post..."
+                    rows={3}
+                  />
+                  {form.formState.errors.excerpt && (
+                    <p className="text-sm text-destructive mt-1">
+                      {form.formState.errors.excerpt.message}
+                    </p>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Content Editor */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Content</CardTitle>
+                <CardDescription>
+                  Write your post content in Markdown. Estimated read time: {readTime} minutes
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Tabs defaultValue="edit" className="w-full">
+                  <TabsList className="grid w-full grid-cols-2">
+                    <TabsTrigger value="edit" className="flex items-center gap-2">
+                      <FileText className="h-4 w-4" />
+                      Edit
+                    </TabsTrigger>
+                    <TabsTrigger value="preview" className="flex items-center gap-2">
+                      <Eye className="h-4 w-4" />
+                      Preview
+                    </TabsTrigger>
+                  </TabsList>
+                  <TabsContent value="edit" className="mt-4">
+                    <Textarea
+                      {...form.register("content")}
+                      placeholder="Write your post content in Markdown..."
+                      rows={20}
+                      className="font-mono"
+                    />
+                  </TabsContent>
+                  <TabsContent value="preview" className="mt-4">
+                    <div className="border rounded-lg p-4 min-h-[500px] prose prose-sm dark:prose-invert max-w-none">
+                      <ReactMarkdown
+                        components={{
+                          code({ className, children, ...props }: any) {
+                            const match = /language-(\w+)/.exec(className || "");
+                            const isInline = !className;
+                            return !isInline && match ? (
+                              <SyntaxHighlighter
+                                style={tomorrow as any}
+                                language={match[1]}
+                                PreTag="div"
+                                {...props}
+                              >
+                                {String(children).replace(/\n$/, "")}
+                              </SyntaxHighlighter>
+                            ) : (
+                              <code className={className} {...props}>
+                                {children}
+                              </code>
+                            );
+                          },
+                        }}
+                      >
+                        {content || "*No content yet. Start writing in the Edit tab.*"}
+                      </ReactMarkdown>
+                    </div>
+                  </TabsContent>
+                </Tabs>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Sidebar */}
+          <div className="space-y-6">
+            {/* Publish Settings */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Publish Settings</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div>
+                  <Label htmlFor="status">Status</Label>
+                  <Select
+                    value={form.watch("status")}
+                    onValueChange={(value: "draft" | "published") =>
+                      form.setValue("status", value)
+                    }
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="draft">Draft</SelectItem>
+                      <SelectItem value="published">Published</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div>
+                  <Label htmlFor="categoryId">Category</Label>
+                  <Select
+                    value={form.watch("categoryId")}
+                    onValueChange={(value) => form.setValue("categoryId", value)}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select category" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {categories.map((category) => (
+                        <SelectItem key={category.id} value={category.id}>
+                          {category.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  {form.formState.errors.categoryId && (
+                    <p className="text-sm text-destructive mt-1">
+                      {form.formState.errors.categoryId.message}
+                    </p>
+                  )}
+                </div>
+
+                <div>
+                  <Label htmlFor="readTime">Read Time (minutes)</Label>
+                  <Input
+                    id="readTime"
+                    type="number"
+                    {...form.register("readTime", { valueAsNumber: true })}
+                    min={1}
+                    max={60}
+                  />
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Tags */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Tags</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="flex gap-2">
+                  <Input
+                    value={newTag}
+                    onChange={(e) => setNewTag(e.target.value)}
+                    placeholder="Add tag..."
+                    onKeyPress={(e) => e.key === "Enter" && (e.preventDefault(), addTag())}
+                  />
+                  <Button type="button" onClick={addTag} size="sm">
+                    <Plus className="h-4 w-4" />
+                  </Button>
+                </div>
+
+                <div className="flex flex-wrap gap-2">
+                  {selectedTags.map((tag) => (
+                    <Badge key={tag} variant="secondary" className="flex items-center gap-1">
+                      {tag}
+                      <button
+                        type="button"
+                        onClick={() => removeTag(tag)}
+                        className="ml-1 hover:text-destructive"
+                      >
+                        <X className="h-3 w-3" />
+                      </button>
+                    </Badge>
+                  ))}
+                </div>
+
+                {allTags.length > 0 && (
+                  <div>
+                    <Label className="text-sm text-muted-foreground">Existing tags:</Label>
+                    <div className="flex flex-wrap gap-1 mt-2">
+                      {allTags.map((tag) => (
+                        <Badge
+                          key={tag.id}
+                          variant="outline"
+                          className="cursor-pointer hover:bg-secondary"
+                          onClick={() => {
+                            if (!selectedTags.includes(tag.slug)) {
+                              setSelectedTags([...selectedTags, tag.slug]);
+                            }
+                          }}
+                        >
+                          {tag.name}
+                        </Badge>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* SEO Settings */}
+            <Card>
+              <CardHeader>
+                <CardTitle>SEO Settings</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div>
+                  <Label htmlFor="metaTitle">Meta Title</Label>
+                  <Input
+                    id="metaTitle"
+                    {...form.register("metaTitle")}
+                    placeholder="SEO title..."
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor="metaDescription">Meta Description</Label>
+                  <Textarea
+                    id="metaDescription"
+                    {...form.register("metaDescription")}
+                    placeholder="SEO description..."
+                    rows={3}
+                  />
+                </div>
+              </CardContent>
+            </Card>
           </div>
         </div>
 
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)}>
-            <div className="grid lg:grid-cols-3 gap-8">
-              {/* Main Content */}
-              <div className="lg:col-span-2 space-y-6">
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Post Content</CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-6">
-                    <FormField
-                      control={form.control}
-                      name="title"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Title</FormLabel>
-                          <FormControl>
-                            <Input
-                              placeholder="Enter post title..."
-                              className="text-lg font-semibold"
-                              {...field}
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-
-                    <FormField
-                      control={form.control}
-                      name="excerpt"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Excerpt</FormLabel>
-                          <FormControl>
-                            <Textarea
-                              placeholder="Brief description of your post..."
-                              rows={3}
-                              {...field}
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-
-                    <FormField
-                      control={form.control}
-                      name="content"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Content</FormLabel>
-                          <FormControl>
-                            {preview ? (
-                              <div className="min-h-[400px] p-6 border border-gray-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-800">
-                                <div className="prose prose-lg dark:prose-invert max-w-none">
-                                  {field.value.split('\n').map((paragraph, index) => (
-                                    <p key={index} className="mb-4 last:mb-0">
-                                      {paragraph}
-                                    </p>
-                                  ))}
-                                </div>
-                              </div>
-                            ) : (
-                              <RichTextEditor
-                                value={field.value}
-                                onChange={handleContentChange}
-                                placeholder="Start writing your post content..."
-                              />
-                            )}
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </CardContent>
-                </Card>
-              </div>
-
-              {/* Sidebar */}
-              <div className="lg:col-span-1 space-y-6">
-                {/* Post Settings */}
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Post Settings</CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <FormField
-                      control={form.control}
-                      name="categoryId"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Category</FormLabel>
-                          <Select onValueChange={field.onChange} defaultValue={field.value}>
-                            <FormControl>
-                              <SelectTrigger>
-                                <SelectValue placeholder="Select a category" />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              {categories.map((category) => (
-                                <SelectItem key={category.id} value={category.id}>
-                                  <div className="flex items-center space-x-2">
-                                    <div
-                                      className="w-3 h-3 rounded-full"
-                                      style={{ backgroundColor: category.color }}
-                                    />
-                                    <span>{category.name}</span>
-                                  </div>
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-
-                    <FormField
-                      control={form.control}
-                      name="readTime"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Read Time (minutes)</FormLabel>
-                          <FormControl>
-                            <Input
-                              type="number"
-                              min="1"
-                              {...field}
-                              onChange={(e) => field.onChange(Number(e.target.value))}
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-
-                    <FormField
-                      control={form.control}
-                      name="featuredImage"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Featured Image URL (optional)</FormLabel>
-                          <FormControl>
-                            <Input
-                              placeholder="https://example.com/image.jpg"
-                              {...field}
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </CardContent>
-                </Card>
-
-                {/* Tags */}
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Tags</CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div className="flex space-x-2">
-                      <Input
-                        placeholder="Add a tag..."
-                        value={newTag}
-                        onChange={(e) => setNewTag(e.target.value)}
-                        onKeyPress={(e) => e.key === "Enter" && (e.preventDefault(), addTag())}
-                      />
-                      <Button type="button" onClick={addTag} size="sm">
-                        Add
-                      </Button>
-                    </div>
-                    
-                    {selectedTags.length > 0 && (
-                      <div className="flex flex-wrap gap-2">
-                        {selectedTags.map((tag) => (
-                          <Badge key={tag} variant="secondary" className="flex items-center space-x-1">
-                            <span>{tag}</span>
-                            <button
-                              type="button"
-                              onClick={() => removeTag(tag)}
-                              className="ml-1 hover:text-red-500"
-                            >
-                              <X size={12} />
-                            </button>
-                          </Badge>
-                        ))}
-                      </div>
-                    )}
-
-                    <div className="text-sm text-gray-600 dark:text-gray-400">
-                      <p className="mb-2">Popular tags:</p>
-                      <div className="flex flex-wrap gap-1">
-                        {tags.slice(0, 6).map((tag) => (
-                          <button
-                            key={tag.id}
-                            type="button"
-                            onClick={() => {
-                              if (!selectedTags.includes(tag.name)) {
-                                setSelectedTags([...selectedTags, tag.name]);
-                              }
-                            }}
-                            className="text-xs px-2 py-1 bg-gray-100 dark:bg-slate-700 rounded hover:bg-gray-200 dark:hover:bg-slate-600 transition-colors"
-                          >
-                            {tag.name}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-
-                {/* SEO Settings */}
-                <Card>
-                  <CardHeader>
-                    <CardTitle>SEO Settings</CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <FormField
-                      control={form.control}
-                      name="metaTitle"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Meta Title (optional)</FormLabel>
-                          <FormControl>
-                            <Input
-                              placeholder="SEO optimized title"
-                              {...field}
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-
-                    <FormField
-                      control={form.control}
-                      name="metaDescription"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Meta Description (optional)</FormLabel>
-                          <FormControl>
-                            <Textarea
-                              placeholder="SEO description for search engines"
-                              rows={3}
-                              {...field}
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </CardContent>
-                </Card>
-              </div>
-            </div>
-          </form>
-        </Form>
-      </main>
+        {/* Action Buttons */}
+        <div className="flex justify-between items-center pt-6 border-t">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => setLocation("/")}
+          >
+            Cancel
+          </Button>
+          <Button
+            type="submit"
+            disabled={createPostMutation.isPending}
+            className="flex items-center gap-2"
+          >
+            <Save className="h-4 w-4" />
+            {createPostMutation.isPending
+              ? "Creating..."
+              : form.watch("status") === "published"
+              ? "Publish Post"
+              : "Save Draft"}
+          </Button>
+        </div>
+      </form>
     </div>
   );
 }

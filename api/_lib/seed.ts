@@ -15,7 +15,6 @@ export async function seedDatabase() {
 
     // Create sample user
     const [user] = await db.insert(users).values({
-      id: 'user-1',
       name: 'Anuj Mahajan',
       username: 'anuj',
       email: 'anuj@example.com',

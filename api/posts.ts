@@ -24,9 +24,16 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       });
       res.json(posts);
     } else if (req.method === 'POST') {
-      const { insertPostSchema } = await import('../shared/schema');
-      const validatedData = insertPostSchema.parse(req.body);
-      const post = await storage.createPost(validatedData);
+      const postData = req.body;
+      
+      // Basic validation
+      if (!postData.title || !postData.content || !postData.authorId || !postData.categoryId) {
+        return res.status(400).json({ 
+          error: 'Missing required fields: title, content, authorId, categoryId' 
+        });
+      }
+
+      const post = await storage.createPost(postData);
       res.status(201).json(post);
     } else {
       res.status(405).json({ error: 'Method not allowed' });
