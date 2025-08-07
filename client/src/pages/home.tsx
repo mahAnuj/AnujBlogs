@@ -23,8 +23,27 @@ export default function Home() {
   const search = urlParams.get("search");
 
   const { data: posts = [], isLoading } = useQuery<PostWithDetails[]>({
-    queryKey: ["/api/posts", { category, tag, search, status: "published" }],
+    queryKey: ["/api/posts", category, tag, search],
+    queryFn: async () => {
+      const params = new URLSearchParams();
+      if (category) params.append('category', category);
+      if (tag) params.append('tag', tag);
+      if (search) params.append('search', search);
+      params.append('status', 'published');
+      
+      const url = `/api/posts?${params.toString()}`;
+      console.log('Fetching posts from:', url);
+      
+      const response = await fetch(url);
+      if (!response.ok) throw new Error('Failed to fetch posts');
+      
+      const data = await response.json();
+      console.log('Posts fetched:', data.length, data);
+      return data;
+    }
   });
+
+  console.log('Render - posts data:', posts, 'isLoading:', isLoading);
 
   const { data: categories = [] } = useQuery<Category[]>({
     queryKey: ["/api/categories"],

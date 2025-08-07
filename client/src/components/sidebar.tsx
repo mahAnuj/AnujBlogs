@@ -151,10 +151,12 @@ export function Sidebar() {
         <CardContent>
           <div className="flex flex-wrap gap-2">
             {tags.slice(0, 8).map((tag) => (
-              <Link key={tag.id} href={`/?tag=${tag.slug}`}>
-                <a className="px-3 py-1 bg-gray-100 dark:bg-slate-700 text-gray-700 dark:text-gray-300 text-sm rounded-full hover:bg-primary hover:text-white transition-colors">
-                  {tag.name}
-                </a>
+              <Link 
+                key={tag.id} 
+                href={`/?tag=${tag.slug}`}
+                className="px-3 py-1 bg-gray-100 dark:bg-slate-700 text-gray-700 dark:text-gray-300 text-sm rounded-full hover:bg-primary hover:text-white transition-colors"
+              >
+                {tag.name}
               </Link>
             ))}
           </div>
