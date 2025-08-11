@@ -44,38 +44,32 @@ export function Sidebar() {
 
   return (
     <aside className="space-y-8">
-      {/* Categories */}
+      {/* Popular Tags */}
       <Card>
         <CardHeader>
           <CardTitle className="text-lg font-bold text-secondary dark:text-white">
-            Categories
+            Popular Tags
           </CardTitle>
         </CardHeader>
-        <CardContent className="space-y-3">
-          {categories.map((category) => {
-            const postCount = posts.filter((post) => post.categoryId === category.id).length;
-            
-            return (
-              <Link 
-                key={category.id} 
-                href={`/category/${category.slug}`}
-                className="flex items-center justify-between p-3 rounded-lg hover:bg-gray-50 dark:hover:bg-slate-700 transition-colors"
-              >
-                <div className="flex items-center space-x-3">
-                  <div
-                    className="w-3 h-3 rounded-full"
-                    style={{ backgroundColor: category.color }}
-                  />
-                  <span className="text-gray-700 dark:text-gray-300">
-                    {category.name}
-                  </span>
-                </div>
-                <span className="text-sm text-gray-500 dark:text-gray-400">
-                  {postCount}
-                </span>
-              </Link>
-            );
-          })}
+        <CardContent>
+          <div className="flex flex-wrap gap-2">
+            {tags.slice(0, 12).map((tag) => {
+              const postCount = posts.filter((post) => 
+                post.tags?.some(postTag => typeof postTag === 'string' ? postTag === tag.name : postTag.id === tag.id)
+              ).length;
+              
+              return (
+                <Link 
+                  key={tag.id} 
+                  href={`/?tag=${tag.slug}`}
+                  className="inline-flex items-center gap-1 px-3 py-1 bg-gray-100 dark:bg-slate-700 text-gray-700 dark:text-gray-300 rounded-full text-sm hover:bg-primary hover:text-white transition-colors"
+                >
+                  #{tag.name}
+                  <span className="text-xs opacity-70">({postCount})</span>
+                </Link>
+              );
+            })}
+          </div>
         </CardContent>
       </Card>
 

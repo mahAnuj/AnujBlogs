@@ -7,15 +7,15 @@ import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { Menu, X, Sun, Moon, Code, Plus } from "lucide-react";
 import { cn } from "@/lib/utils";
-import type { Category } from "@shared/schema";
+import type { Tag } from "@shared/schema";
 
 export function Header() {
   const { theme, toggleTheme } = useTheme();
   const [location] = useLocation();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
-  const { data: categories = [] } = useQuery<Category[]>({
-    queryKey: ["/api/categories"],
+  const { data: tags = [] } = useQuery<Tag[]>({
+    queryKey: ["/api/tags"],
   });
 
   const isActive = (path: string) => {
@@ -24,8 +24,8 @@ export function Header() {
     return false;
   };
 
-  const isActiveCategory = (categorySlug: string) => {
-    return location === `/category/${categorySlug}`;
+  const isActiveTag = (tagSlug: string) => {
+    return location.includes(`tag=${tagSlug}`);
   };
 
   return (
@@ -40,7 +40,6 @@ export function Header() {
               </div>
               <div>
                 <h1 className="text-xl font-bold text-secondary dark:text-white">Anuj's Blog</h1>
-                <p className="text-xs text-gray-500 dark:text-gray-400">by anujmahajan.dev</p>
               </div>
             </Link>
           </div>
@@ -56,18 +55,18 @@ export function Header() {
               All Posts
             </Link>
             
-            {categories.map((category) => (
+            {tags.slice(0, 4).map((tag) => (
               <Link 
-                key={category.id} 
-                href={`/category/${category.slug}`}
+                key={tag.id} 
+                href={`/?tag=${tag.slug}`}
                 className={cn(
-                  "font-medium transition-colors",
-                  isActiveCategory(category.slug)
-                    ? "text-primary border-b-2 border-primary pb-1"
-                    : "text-gray-600 dark:text-gray-300 hover:text-primary"
+                  "font-medium transition-colors px-3 py-1 rounded-full text-sm",
+                  isActiveTag(tag.slug)
+                    ? "bg-primary text-white"
+                    : "bg-gray-100 dark:bg-slate-700 text-gray-600 dark:text-gray-300 hover:bg-primary hover:text-white"
                 )}
               >
-                {category.name}
+                #{tag.name}
               </Link>
             ))}
           </nav>
@@ -141,19 +140,19 @@ export function Header() {
                   All Posts
                 </Link>
                 
-                {categories.map((category) => (
+                {tags.slice(0, 6).map((tag) => (
                   <Link 
-                    key={category.id} 
-                    href={`/category/${category.slug}`}
+                    key={tag.id} 
+                    href={`/?tag=${tag.slug}`}
                     className={cn(
                       "block px-3 py-2 rounded-md font-medium transition-colors",
-                      isActiveCategory(category.slug)
+                      isActiveTag(tag.slug)
                         ? "text-primary bg-primary bg-opacity-10"
                         : "text-gray-600 dark:text-gray-300 hover:text-primary hover:bg-gray-50 dark:hover:bg-slate-700"
                     )}
                     onClick={() => setIsMobileMenuOpen(false)}
                   >
-                    {category.name}
+                    #{tag.name}
                   </Link>
                 ))}
               </nav>

@@ -9,7 +9,7 @@ import { SEOHead } from "@/components/seo-head";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Loader2 } from "lucide-react";
-import type { PostWithDetails, Category } from "@shared/schema";
+import type { PostWithDetails, Tag } from "@shared/schema";
 
 export default function Home() {
   const [location] = useLocation();
@@ -18,15 +18,14 @@ export default function Home() {
 
   // Parse URL parameters
   const urlParams = new URLSearchParams(location.split("?")[1] || "");
-  const category = location.startsWith("/category/") ? location.split("/category/")[1] : urlParams.get("category");
+  // Remove category parameter handling as we're now using tags
   const tag = urlParams.get("tag");
   const search = urlParams.get("search");
 
   const { data: posts = [], isLoading } = useQuery<PostWithDetails[]>({
-    queryKey: ["/api/posts", category, tag, search],
+    queryKey: ["/api/posts", tag, search],
     queryFn: async () => {
       const params = new URLSearchParams();
-      if (category) params.append('category', category);
       if (tag) params.append('tag', tag);
       if (search) params.append('search', search);
       params.append('status', 'published');
@@ -41,8 +40,8 @@ export default function Home() {
     }
   });
 
-  const { data: categories = [] } = useQuery<Category[]>({
-    queryKey: ["/api/categories"],
+  const { data: tags = [] } = useQuery<Tag[]>({
+    queryKey: ["/api/tags"],
   });
 
   // Sort posts
@@ -67,22 +66,22 @@ export default function Home() {
     setDisplayCount(prev => prev + 6);
   };
 
-  // Get current category for display
-  const currentCategory = category ? categories.find((cat) => cat.slug === category) : null;
+  // Get current tag for display
+  const currentTag = tag ? tags.find((t) => t.slug === tag) : null;
 
   // SEO title and description
-  let pageTitle = "TechStack Blog - Latest Trends in AI, Backend, Frontend & Hosting";
+  let pageTitle = "Anuj's Blog - Latest Trends in AI, Backend, Frontend & Hosting";
   let pageDescription = "Discover the latest trends in AI/LLM, backend technologies, frontend frameworks, and hosting solutions. Technical blog by Anuj Mahajan featuring in-depth tutorials and insights.";
 
-  if (currentCategory) {
-    pageTitle = `${currentCategory.name} - TechStack Blog`;
-    pageDescription = `Latest ${currentCategory.name.toLowerCase()} articles and tutorials. ${currentCategory.description}`;
+  if (currentTag) {
+    pageTitle = `#${currentTag.name} Posts - Anuj's Blog`;
+    pageDescription = `Latest posts tagged with #${currentTag.name} on Anuj's Blog.`;
   } else if (search) {
-    pageTitle = `Search: ${search} - TechStack Blog`;
-    pageDescription = `Search results for "${search}" on TechStack Blog.`;
+    pageTitle = `Search: ${search} - Anuj's Blog`;
+    pageDescription = `Search results for "${search}" on Anuj's Blog.`;
   } else if (tag) {
-    pageTitle = `${tag} Posts - TechStack Blog`;
-    pageDescription = `All posts tagged with "${tag}" on TechStack Blog.`;
+    pageTitle = `#${tag} Posts - Anuj's Blog`;
+    pageDescription = `All posts tagged with #${tag} on Anuj's Blog.`;
   }
 
   return (
@@ -95,7 +94,7 @@ export default function Home() {
       
       <Header />
       
-      {!category && !search && !tag && <HeroBanner />}
+      {!search && !tag && <HeroBanner />}
       
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="grid lg:grid-cols-4 gap-8">
@@ -104,7 +103,7 @@ export default function Home() {
             <div className="flex flex-wrap items-center justify-between mb-8 gap-4">
               <div className="flex items-center space-x-4">
                 <h3 className="text-2xl font-bold text-secondary dark:text-white">
-                  {currentCategory ? currentCategory.name : search ? `Search: "${search}"` : tag ? `Tagged: ${tag}` : "Latest Posts"}
+                  {currentTag ? `#${currentTag.name}` : search ? `Search: "${search}"` : tag ? `Tagged: #${tag}` : "Latest Posts"}
                 </h3>
                 {!isLoading && (
                   <span className="px-3 py-1 bg-primary/10 text-primary text-sm rounded-full">
@@ -148,8 +147,7 @@ export default function Home() {
                 </h3>
                 <p className="text-gray-500 dark:text-gray-400">
                   {search ? `No posts match your search for "${search}".` : 
-                   category ? `No posts in the ${currentCategory?.name} category yet.` :
-                   tag ? `No posts tagged with "${tag}".` :
+                   tag ? `No posts tagged with #${tag}.` :
                    "No posts available at the moment."}
                 </p>
               </div>
@@ -162,7 +160,7 @@ export default function Home() {
                   <BlogPostCard
                     key={post.id}
                     post={post}
-                    featured={index === 0 && !category && !search && !tag}
+                    featured={index === 0 && !search && !tag}
                   />
                 ))}
               </div>
@@ -196,7 +194,6 @@ export default function Home() {
                 </div>
                 <div>
                   <h3 className="text-xl font-bold">Anuj's Blog</h3>
-                  <p className="text-sm text-gray-300">by anujmahajan.dev</p>
                 </div>
               </div>
               <p className="text-gray-300 mb-6 max-w-md">
@@ -208,10 +205,10 @@ export default function Home() {
               <h4 className="text-lg font-semibold mb-4">Quick Links</h4>
               <ul className="space-y-2 text-gray-300">
                 <li><a href="/" className="hover:text-white transition-colors">All Posts</a></li>
-                {categories.slice(0, 4).map((cat) => (
-                  <li key={cat.id}>
-                    <a href={`/category/${cat.slug}`} className="hover:text-white transition-colors">
-                      {cat.name}
+                {tags.slice(0, 4).map((tag) => (
+                  <li key={tag.id}>
+                    <a href={`/?tag=${tag.slug}`} className="hover:text-white transition-colors">
+                      #{tag.name}
                     </a>
                   </li>
                 ))}
@@ -235,7 +232,7 @@ export default function Home() {
 
           <div className="border-t border-gray-700 mt-12 pt-8 flex flex-col md:flex-row justify-between items-center">
             <p className="text-gray-300 text-sm">
-              © 2024 TechStack Blog. All rights reserved. | Built with ❤️ by{" "}
+              © 2024 Anuj's Blog. All rights reserved. | Built with ❤️ by{" "}
               <a href="https://anujmahajan.dev" className="text-primary hover:text-accent transition-colors">
                 Anuj Mahajan
               </a>

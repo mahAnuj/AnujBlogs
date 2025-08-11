@@ -7,6 +7,8 @@ This is Anuj's Blog - a modern full-stack blog platform focused on technical con
 ## User Preferences
 
 Preferred communication style: Simple, everyday language.
+Blog branding: Clean "Anuj's Blog" name without subtitle references to anujmahajan.dev.
+Content organization: Dynamic tag-based system instead of fixed categories for flexible content management.
 
 ## System Architecture
 
@@ -43,7 +45,8 @@ Preferred communication style: Simple, everyday language.
 - **Rich Text**: Markdown support with syntax highlighting for code blocks
 - **Media Handling**: Google Cloud Storage integration with Uppy for file uploads
 - **SEO**: Comprehensive SEO meta tags, Open Graph, and Twitter Card support
-- **Content Structure**: Posts with categories, tags, featured images, and metadata
+- **Content Structure**: Posts with dynamic tags, featured images, and metadata (removed fixed categories)
+- **Notion CMS**: Integrated with Notion for content creation and management
 
 ### UI/UX Design Patterns
 - **Component Library**: Comprehensive shadcn/ui components with consistent theming
