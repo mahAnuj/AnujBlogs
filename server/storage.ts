@@ -1,5 +1,6 @@
 import { type User, type InsertUser, type Category, type InsertCategory, type Tag, type InsertTag, type Post, type InsertPost, type UpdatePost, type Comment, type InsertComment, type PostWithDetails, type CommentWithReplies } from "@shared/schema";
 import { randomUUID } from "crypto";
+import { getBlogPosts, findDatabaseByTitle, getPageContent, convertBlocksToMarkdown } from "./notion";
 
 export interface IStorage {
   // Users
@@ -1611,4 +1612,146 @@ Replit provides an excellent platform for deploying full-stack applications with
   }
 }
 
-export const storage = new MemStorage();
+// Notion-based storage implementation
+export class NotionStorage extends MemStorage implements IStorage {
+  private blogDatabaseId: string | null = null;
+
+  private async ensureBlogDatabase() {
+    if (!this.blogDatabaseId) {
+      const blogDb = await findDatabaseByTitle("Blog Posts");
+      if (!blogDb) {
+        throw new Error("Blog Posts database not found. Please run setup-notion.ts first.");
+      }
+      this.blogDatabaseId = blogDb.id;
+    }
+    return this.blogDatabaseId;
+  }
+
+  async getPosts(filters?: { category?: string; tag?: string; search?: string; status?: string }): Promise<PostWithDetails[]> {
+    try {
+      const databaseId = await this.ensureBlogDatabase();
+      const notionPosts = await getBlogPosts(databaseId);
+      
+      // Convert Notion posts to our PostWithDetails format
+      const posts: PostWithDetails[] = [];
+      
+      for (const notionPost of notionPosts) {
+        // Get page content from Notion
+        const pageBlocks = await getPageContent(notionPost.notionPageId);
+        const content = convertBlocksToMarkdown(pageBlocks);
+        
+        // Create PostWithDetails object
+        const post: PostWithDetails = {
+          id: notionPost.id,
+          title: notionPost.title,
+          slug: notionPost.slug || this.generateSlug(notionPost.title),
+          content: content,
+          excerpt: notionPost.excerpt,
+          status: notionPost.status.toLowerCase() as "draft" | "published" | "archived",
+          publishedAt: notionPost.publishedAt,
+          createdAt: notionPost.createdAt,
+          authorId: "author-1", // Default author for now
+          categoryId: "cat-1", // Will map properly below
+          metaTitle: notionPost.metaTitle,
+          metaDescription: notionPost.metaDescription,
+          readTime: notionPost.readTime,
+          views: notionPost.views,
+          likes: notionPost.likes,
+          // Relations
+          author: {
+            id: "author-1",
+            email: "anuj@anujmahajan.dev",
+            username: "anuj",
+            name: "Anuj Mahajan",
+            avatar: null,
+            createdAt: new Date(),
+          },
+          category: {
+            id: this.getCategoryIdByName(notionPost.category),
+            name: notionPost.category,
+            slug: notionPost.category.toLowerCase().replace(/[^a-z0-9]/g, "-"),
+            description: `Articles about ${notionPost.category}`,
+            color: "#3B82F6",
+            createdAt: new Date(),
+          },
+          tags: notionPost.tags.map((tagName: string) => ({
+            id: this.getTagIdByName(tagName),
+            name: tagName,
+            slug: tagName.toLowerCase().replace(/[^a-z0-9]/g, "-"),
+            createdAt: new Date(),
+          })),
+          comments: []
+        };
+        
+        posts.push(post);
+      }
+      
+      // Apply filters
+      let filteredPosts = posts;
+      
+      if (filters?.status) {
+        filteredPosts = filteredPosts.filter(post => post.status === filters.status);
+      }
+      
+      if (filters?.category) {
+        filteredPosts = filteredPosts.filter(post => 
+          post.category.slug === filters.category || post.category.name.toLowerCase() === filters.category?.toLowerCase()
+        );
+      }
+      
+      if (filters?.tag) {
+        filteredPosts = filteredPosts.filter(post => 
+          post.tags?.some(tag => tag.slug === filters.tag || tag.name.toLowerCase() === filters.tag?.toLowerCase())
+        );
+      }
+      
+      if (filters?.search) {
+        const searchTerm = filters.search.toLowerCase();
+        filteredPosts = filteredPosts.filter(post => 
+          post.title.toLowerCase().includes(searchTerm) ||
+          post.content.toLowerCase().includes(searchTerm) ||
+          post.excerpt.toLowerCase().includes(searchTerm)
+        );
+      }
+      
+      return filteredPosts;
+    } catch (error) {
+      console.error("Error fetching posts from Notion:", error);
+      // Fallback to in-memory storage
+      return super.getPosts(filters);
+    }
+  }
+
+  async getPostBySlug(slug: string): Promise<PostWithDetails | undefined> {
+    const posts = await this.getPosts();
+    return posts.find(post => post.slug === slug);
+  }
+
+  private generateSlug(title: string): string {
+    return title.toLowerCase()
+      .replace(/[^a-z0-9\s-]/g, '')
+      .replace(/\s+/g, '-')
+      .replace(/-+/g, '-')
+      .trim();
+  }
+
+  private getCategoryIdByName(name: string): string {
+    const categoryMap: Record<string, string> = {
+      "AI/LLM": "cat-1",
+      "Backend": "cat-2", 
+      "Frontend": "cat-3",
+      "Hosting": "cat-4",
+      "General": "cat-5"
+    };
+    return categoryMap[name] || "cat-5";
+  }
+
+  private getTagIdByName(name: string): string {
+    return `tag-${name.toLowerCase().replace(/[^a-z0-9]/g, "")}`;
+  }
+}
+
+// Use Notion storage if secrets are available, otherwise fallback to memory storage
+export const storage = process.env.NOTION_INTEGRATION_SECRET && process.env.NOTION_PAGE_URL 
+  ? new NotionStorage() 
+  : new MemStorage();
