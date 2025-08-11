@@ -13,7 +13,7 @@ interface SEOHeadProps {
 }
 
 export function SEOHead({
-  title = "TechStack Blog - Latest Trends in AI, Backend, Frontend & Hosting",
+  title = "Anuj's Blog - Latest Trends in AI, Backend, Frontend & Hosting",
   description = "Discover the latest trends in AI/LLM, backend technologies, frontend frameworks, and hosting solutions. Technical blog by Anuj Mahajan featuring in-depth tutorials and insights.",
   image = "/og-image.jpg",
   url,

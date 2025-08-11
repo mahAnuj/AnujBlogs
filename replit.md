@@ -1,8 +1,8 @@
-# TechStack Blog - A Modern Full-Stack Blog Platform
+# Anuj's Blog - A Modern Full-Stack Blog Platform
 
 ## Overview
 
-This is a modern full-stack blog platform focused on technical content covering AI/LLM, backend technologies, frontend frameworks, and hosting solutions. The application features a React frontend with TypeScript, Express.js backend, PostgreSQL database with Drizzle ORM, and comprehensive blog management capabilities including posts, comments, categories, and tags.
+This is Anuj's Blog - a modern full-stack blog platform focused on technical content covering AI/LLM, backend technologies, frontend frameworks, and hosting solutions. The application features a React frontend with TypeScript, Express.js backend, and Notion CMS integration for easy content management. The blog is designed to complement anujmahajan.dev with professional technical writing and insights.
 
 ## User Preferences
 

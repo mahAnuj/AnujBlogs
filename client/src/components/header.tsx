@@ -39,7 +39,7 @@ export function Header() {
                 <Code className="text-white" size={20} />
               </div>
               <div>
-                <h1 className="text-xl font-bold text-secondary dark:text-white">TechStack</h1>
+                <h1 className="text-xl font-bold text-secondary dark:text-white">Anuj's Blog</h1>
                 <p className="text-xs text-gray-500 dark:text-gray-400">by anujmahajan.dev</p>
               </div>
             </Link>

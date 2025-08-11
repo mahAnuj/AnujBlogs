@@ -195,7 +195,7 @@ export default function Home() {
                   <span className="text-white text-lg">💻</span>
                 </div>
                 <div>
-                  <h3 className="text-xl font-bold">TechStack Blog</h3>
+                  <h3 className="text-xl font-bold">Anuj's Blog</h3>
                   <p className="text-sm text-gray-300">by anujmahajan.dev</p>
                 </div>
               </div>
