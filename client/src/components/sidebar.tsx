@@ -30,9 +30,7 @@ export function Sidebar() {
     { id: 12, name: "API", slug: "api" }
   ];
 
-  const { data: tags = [] } = useQuery<Tag[]>({
-    queryKey: ["/api/tags"],
-  });
+  // Removed tags query as we're using static popular tags only
 
   const { data: posts = [] } = useQuery<PostWithDetails[]>({
     queryKey: ["/api/posts"],
@@ -149,27 +147,7 @@ export function Sidebar() {
         </CardContent>
       </Card>
 
-      {/* Tags Cloud */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-lg font-bold text-secondary dark:text-white">
-            Popular Tags
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="flex flex-wrap gap-2">
-            {tags.slice(0, 8).map((tag) => (
-              <Link 
-                key={tag.id} 
-                href={`/?tag=${tag.slug}`}
-                className="px-3 py-1 bg-gray-100 dark:bg-slate-700 text-gray-700 dark:text-gray-300 text-sm rounded-full hover:bg-primary hover:text-white transition-colors"
-              >
-                {tag.name}
-              </Link>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
+
     </aside>
   );
 }
