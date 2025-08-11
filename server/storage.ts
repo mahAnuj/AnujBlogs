@@ -1657,16 +1657,20 @@ export class NotionStorage extends MemStorage implements IStorage {
           slug: notionPost.slug || this.generateSlug(notionPost.title),
           content: content,
           excerpt: notionPost.excerpt,
+          featuredImage: null,
           status: notionPost.status.toLowerCase() as "draft" | "published" | "archived",
           publishedAt: notionPost.publishedAt,
           createdAt: notionPost.createdAt,
+          updatedAt: new Date(),
           authorId: "author-1", // Default author for now
           categoryId: "cat-1", // Will map properly below
+          tags: notionPost.tags,
           metaTitle: notionPost.metaTitle,
           metaDescription: notionPost.metaDescription,
           readTime: notionPost.readTime,
           views: notionPost.views,
           likes: notionPost.likes,
+          commentsCount: 0,
           // Relations
           author: {
             id: "author-1",
@@ -1683,13 +1687,7 @@ export class NotionStorage extends MemStorage implements IStorage {
             description: `Articles about ${notionPost.category}`,
             color: "#3B82F6",
             createdAt: new Date(),
-          },
-          tags: notionPost.tags.map((tagName: string) => ({
-            id: this.getTagIdByName(tagName),
-            name: tagName,
-            slug: tagName.toLowerCase().replace(/[^a-z0-9]/g, "-"),
-            createdAt: new Date(),
-          }))
+          }
         };
         
         posts.push(post);
@@ -1713,7 +1711,7 @@ export class NotionStorage extends MemStorage implements IStorage {
           post.tags?.some(tag => 
             typeof tag === 'string' 
               ? tag.toLowerCase() === filters.tag?.toLowerCase()
-              : tag.slug === filters.tag || tag.name.toLowerCase() === filters.tag?.toLowerCase()
+              : false
           )
         );
       }
@@ -1764,7 +1762,5 @@ export class NotionStorage extends MemStorage implements IStorage {
   }
 }
 
-// Use Notion storage if secrets are available, otherwise fallback to memory storage
-export const storage = process.env.NOTION_INTEGRATION_SECRET && process.env.NOTION_PAGE_URL 
-  ? new NotionStorage() 
-  : new MemStorage();
+// Use memory storage for reliable local development
+export const storage = new MemStorage();

@@ -81,7 +81,7 @@ export function Header() {
 
             {/* New Post Button */}
             <Button asChild size="sm" className="hidden md:flex">
-              <Link href="/create" className="flex items-center gap-2">
+              <Link href="/create-markdown" className="flex items-center gap-2">
                 <Plus className="h-4 w-4" />
                 New Post
               </Link>

@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
-import { Eye } from "lucide-react";
+import { Eye, Plus, FileText } from "lucide-react";
 import type { Tag, PostWithDetails } from "@shared/schema";
 
 export function Sidebar() {
@@ -56,6 +56,29 @@ export function Sidebar() {
 
   return (
     <aside className="space-y-8">
+      {/* Quick Actions */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-lg font-bold text-secondary dark:text-white">
+            Quick Actions
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <Button asChild className="w-full">
+            <Link href="/create-markdown" className="flex items-center gap-2">
+              <Plus className="h-4 w-4" />
+              New Markdown Post
+            </Link>
+          </Button>
+          <Button asChild variant="outline" className="w-full">
+            <Link href="/create" className="flex items-center gap-2">
+              <FileText className="h-4 w-4" />
+              Old Editor
+            </Link>
+          </Button>
+        </CardContent>
+      </Card>
+
       {/* Popular Tags */}
       <Card>
         <CardHeader>
@@ -67,7 +90,7 @@ export function Sidebar() {
           <div className="flex flex-wrap gap-2">
             {popularTags.map((tag) => {
               const postCount = posts.filter((post) => 
-                post.tags?.some(postTag => typeof postTag === 'string' ? postTag === tag.name : postTag.id === tag.id)
+                post.tags?.some(postTag => typeof postTag === 'string' ? postTag === tag.name : false)
               ).length;
               
               return (
