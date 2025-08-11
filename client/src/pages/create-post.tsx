@@ -4,9 +4,18 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Header } from "@/components/header";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { ExternalLink, BookOpen, Zap, Users, Heart, CheckCircle2, ArrowRight } from "lucide-react";
+import { ExternalLink, BookOpen, Zap, Users, Heart, CheckCircle2, ArrowRight, AlertCircle } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+
+interface NotionStatus {
+  configured: boolean;
+  message: string;
+}
 
 export default function CreatePost() {
+  const { data: notionStatus, isLoading } = useQuery<NotionStatus>({
+    queryKey: ["/api/notion/status"],
+  });
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-slate-900">
       <Header />
@@ -20,6 +29,25 @@ export default function CreatePost() {
             Your blog is now powered by Notion! Write, edit, and publish posts using Notion's amazing editor that you already know and love.
           </p>
         </div>
+
+        {/* Notion Status Alert */}
+        {!isLoading && notionStatus && !notionStatus.configured && (
+          <Alert className="mb-6 border-orange-200 bg-orange-50 dark:bg-orange-900/20">
+            <AlertCircle className="h-4 w-4 text-orange-600" />
+            <AlertDescription className="text-orange-800 dark:text-orange-200">
+              <strong>Notion Setup Required:</strong> {notionStatus.message}
+            </AlertDescription>
+          </Alert>
+        )}
+
+        {!isLoading && notionStatus && notionStatus.configured && (
+          <Alert className="mb-6 border-green-200 bg-green-50 dark:bg-green-900/20">
+            <CheckCircle2 className="h-4 w-4 text-green-600" />
+            <AlertDescription className="text-green-800 dark:text-green-200">
+              <strong>Notion Ready:</strong> Your Notion integration is properly configured!
+            </AlertDescription>
+          </Alert>
+        )}
 
         <div className="grid md:grid-cols-2 gap-6 mb-8">
           {/* Why Notion CMS */}

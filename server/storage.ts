@@ -1618,11 +1618,17 @@ export class NotionStorage extends MemStorage implements IStorage {
 
   private async ensureBlogDatabase() {
     if (!this.blogDatabaseId) {
-      const blogDb = await findDatabaseByTitle("Blog Posts");
-      if (!blogDb) {
-        throw new Error("Blog Posts database not found. Please run setup-notion.ts first.");
+      try {
+        const blogDb = await findDatabaseByTitle("Blog Posts");
+        if (!blogDb) {
+          console.warn("Blog Posts database not found. Please check Notion setup.");
+          return null;
+        }
+        this.blogDatabaseId = blogDb.id;
+      } catch (error) {
+        console.error("Failed to connect to Notion:", error);
+        return null;
       }
-      this.blogDatabaseId = blogDb.id;
     }
     return this.blogDatabaseId;
   }
@@ -1630,6 +1636,10 @@ export class NotionStorage extends MemStorage implements IStorage {
   async getPosts(filters?: { category?: string; tag?: string; search?: string; status?: string }): Promise<PostWithDetails[]> {
     try {
       const databaseId = await this.ensureBlogDatabase();
+      if (!databaseId) {
+        console.log("Notion not configured, falling back to demo posts");
+        return super.getPosts(filters);
+      }
       const notionPosts = await getBlogPosts(databaseId);
       
       // Convert Notion posts to our PostWithDetails format
@@ -1679,8 +1689,7 @@ export class NotionStorage extends MemStorage implements IStorage {
             name: tagName,
             slug: tagName.toLowerCase().replace(/[^a-z0-9]/g, "-"),
             createdAt: new Date(),
-          })),
-          comments: []
+          }))
         };
         
         posts.push(post);
@@ -1701,7 +1710,11 @@ export class NotionStorage extends MemStorage implements IStorage {
       
       if (filters?.tag) {
         filteredPosts = filteredPosts.filter(post => 
-          post.tags?.some(tag => tag.slug === filters.tag || tag.name.toLowerCase() === filters.tag?.toLowerCase())
+          post.tags?.some(tag => 
+            typeof tag === 'string' 
+              ? tag.toLowerCase() === filters.tag?.toLowerCase()
+              : tag.slug === filters.tag || tag.name.toLowerCase() === filters.tag?.toLowerCase()
+          )
         );
       }
       

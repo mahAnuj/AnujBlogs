@@ -44,6 +44,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Check Notion setup status
+  app.get("/api/notion/status", async (req, res) => {
+    try {
+      if (!process.env.NOTION_INTEGRATION_SECRET || !process.env.NOTION_PAGE_URL) {
+        return res.json({ configured: false, message: "Missing Notion credentials" });
+      }
+
+      // Try to access the Notion page
+      const { findDatabaseByTitle } = await import("./notion");
+      const blogDb = await findDatabaseByTitle("Blog Posts");
+      
+      if (!blogDb) {
+        return res.json({ 
+          configured: false, 
+          message: "Blog Posts database not found. Please create it or run setup." 
+        });
+      }
+
+      res.json({ configured: true, message: "Notion is properly configured" });
+    } catch (error) {
+      console.error("Notion status check failed:", error);
+      res.json({ 
+        configured: false, 
+        message: "Cannot access Notion page. Check permissions and page sharing." 
+      });
+    }
+  });
+
   app.get("/api/posts/:slug", async (req, res) => {
     try {
       const { slug } = req.params;
