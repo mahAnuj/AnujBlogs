@@ -6,15 +6,29 @@ import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { Eye } from "lucide-react";
-import type { Category, Tag, PostWithDetails } from "@shared/schema";
+import type { Tag, PostWithDetails } from "@shared/schema";
 
 export function Sidebar() {
   const { toast } = useToast();
   const [email, setEmail] = useState("");
 
-  const { data: categories = [] } = useQuery<Category[]>({
-    queryKey: ["/api/categories"],
-  });
+  // Removed categories query as we're using static popular tags
+
+  // Popular tags with AI guaranteed, plus famous frontend/backend tags and trending topics
+  const popularTags = [
+    { id: 1, name: "AI", slug: "ai" },
+    { id: 2, name: "React", slug: "react" }, // Famous frontend tag
+    { id: 3, name: "Node.js", slug: "nodejs" }, // Famous backend tag
+    { id: 4, name: "Trending", slug: "trending" },
+    { id: 5, name: "Machine Learning", slug: "machine-learning" },
+    { id: 6, name: "TypeScript", slug: "typescript" },
+    { id: 7, name: "Python", slug: "python" },
+    { id: 8, name: "LLM", slug: "llm" },
+    { id: 9, name: "DevOps", slug: "devops" },
+    { id: 10, name: "JavaScript", slug: "javascript" },
+    { id: 11, name: "Cloud", slug: "cloud" },
+    { id: 12, name: "API", slug: "api" }
+  ];
 
   const { data: tags = [] } = useQuery<Tag[]>({
     queryKey: ["/api/tags"],
@@ -53,7 +67,7 @@ export function Sidebar() {
         </CardHeader>
         <CardContent>
           <div className="flex flex-wrap gap-2">
-            {tags.slice(0, 12).map((tag) => {
+            {popularTags.map((tag) => {
               const postCount = posts.filter((post) => 
                 post.tags?.some(postTag => typeof postTag === 'string' ? postTag === tag.name : postTag.id === tag.id)
               ).length;

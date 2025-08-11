@@ -14,12 +14,9 @@ export function Header() {
   const [location] = useLocation();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
-  // Popular AI/LLM topics for navigation
-  const popularTopics = [
-    { name: "AI", slug: "ai" },
-    { name: "LLM", slug: "llm" },
-    { name: "Machine Learning", slug: "machine-learning" },
-    { name: "Backend", slug: "backend" }
+  // Header navigation topics - only "All posts" and "AI"
+  const headerTopics = [
+    { name: "AI", slug: "ai" }
   ];
 
   const isActive = (path: string) => {
@@ -59,7 +56,7 @@ export function Header() {
               All Posts
             </Link>
             
-            {popularTopics.map((topic) => (
+            {headerTopics.map((topic) => (
               <Link 
                 key={topic.slug} 
                 href={`/?tag=${topic.slug}`}
@@ -144,7 +141,7 @@ export function Header() {
                   All Posts
                 </Link>
                 
-                {popularTopics.map((topic) => (
+                {headerTopics.map((topic) => (
                   <Link 
                     key={topic.slug} 
                     href={`/?tag=${topic.slug}`}

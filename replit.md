@@ -10,6 +10,8 @@ Preferred communication style: Simple, everyday language.
 Blog branding: Clean "Anuj's Blog" name without subtitle references to anujmahajan.dev.
 Content organization: Dynamic tag-based system instead of fixed categories for flexible content management.
 Navigation topics: Header features AI/LLM-focused topics (AI, LLM, Machine Learning, Backend) instead of dynamic tags.
+Header navigation: Only "All posts" and "AI" as main navigation items.
+Popular tags: AI (guaranteed), one famous frontend tag, one backend tag, and trending topics.
 
 ## System Architecture
 
