@@ -3,20 +3,24 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useTheme } from "@/hooks/use-theme";
 import { SearchBar } from "@/components/search-bar";
-import { useQuery } from "@tanstack/react-query";
+// Removed useQuery import as we're using static topics now
 import { useState } from "react";
 import { Menu, X, Sun, Moon, Code, Plus } from "lucide-react";
 import { cn } from "@/lib/utils";
-import type { Tag } from "@shared/schema";
+// Removed Tag import as we're using static topics now
 
 export function Header() {
   const { theme, toggleTheme } = useTheme();
   const [location] = useLocation();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
-  const { data: tags = [] } = useQuery<Tag[]>({
-    queryKey: ["/api/tags"],
-  });
+  // Popular AI/LLM topics for navigation
+  const popularTopics = [
+    { name: "AI", slug: "ai" },
+    { name: "LLM", slug: "llm" },
+    { name: "Machine Learning", slug: "machine-learning" },
+    { name: "Backend", slug: "backend" }
+  ];
 
   const isActive = (path: string) => {
     if (path === "/" && location === "/") return true;
@@ -55,18 +59,18 @@ export function Header() {
               All Posts
             </Link>
             
-            {tags.slice(0, 4).map((tag) => (
+            {popularTopics.map((topic) => (
               <Link 
-                key={tag.id} 
-                href={`/?tag=${tag.slug}`}
+                key={topic.slug} 
+                href={`/?tag=${topic.slug}`}
                 className={cn(
                   "font-medium transition-colors px-3 py-1 rounded-full text-sm",
-                  isActiveTag(tag.slug)
+                  isActiveTag(topic.slug)
                     ? "bg-primary text-white"
                     : "bg-gray-100 dark:bg-slate-700 text-gray-600 dark:text-gray-300 hover:bg-primary hover:text-white"
                 )}
               >
-                #{tag.name}
+                {topic.name}
               </Link>
             ))}
           </nav>
@@ -140,19 +144,19 @@ export function Header() {
                   All Posts
                 </Link>
                 
-                {tags.slice(0, 6).map((tag) => (
+                {popularTopics.map((topic) => (
                   <Link 
-                    key={tag.id} 
-                    href={`/?tag=${tag.slug}`}
+                    key={topic.slug} 
+                    href={`/?tag=${topic.slug}`}
                     className={cn(
                       "block px-3 py-2 rounded-md font-medium transition-colors",
-                      isActiveTag(tag.slug)
+                      isActiveTag(topic.slug)
                         ? "text-primary bg-primary bg-opacity-10"
                         : "text-gray-600 dark:text-gray-300 hover:text-primary hover:bg-gray-50 dark:hover:bg-slate-700"
                     )}
                     onClick={() => setIsMobileMenuOpen(false)}
                   >
-                    #{tag.name}
+                    {topic.name}
                   </Link>
                 ))}
               </nav>
