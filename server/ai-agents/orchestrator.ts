@@ -185,13 +185,22 @@ class AIOrchestrator {
     console.log(`Starting generation job ${jobId}`);
 
     try {
-      // Step 1: Fetch news
-      this.updateJob(jobId, { status: 'fetching', progress: 10 });
-      const articles = await this.newsAgent.fetchLatestNews(this.getJob(jobId)!.config.hoursBack);
-      
-      // Step 2: Analyze relevance
-      this.updateJob(jobId, { status: 'analyzing', progress: 30 });
+      // Step 1: Gather latest knowledge using LatestKnowledgeAgent
+      this.updateJob(jobId, { status: 'fetching', progress: 5 });
       const job = this.getJob(jobId)!;
+      let knowledgeContext;
+      
+      if (job.config.focusTopic) {
+        console.log(`🧠 Gathering latest knowledge for focus topic: ${job.config.focusTopic}`);
+        knowledgeContext = await this.knowledgeAgent.gatherLatestKnowledge(job.config.focusTopic);
+      }
+
+      // Step 2: Fetch news
+      this.updateJob(jobId, { status: 'fetching', progress: 15 });
+      const articles = await this.newsAgent.fetchLatestNews(job.config.hoursBack);
+      
+      // Step 3: Analyze relevance
+      this.updateJob(jobId, { status: 'analyzing', progress: 35 });
       const relevantArticles = await this.newsAgent.analyzeRelevance(articles, job.config.focusTopic);
       
       // Filter by relevance score and limit count
@@ -203,9 +212,9 @@ class AIOrchestrator {
         throw new Error('No articles met the relevance criteria');
       }
 
-      // Step 3: Generate multiple blog posts (one per article)
-      this.updateJob(jobId, { status: 'generating', progress: 60 });
-      const generatedPosts = await this.contentAgent.generateMultipleBlogPosts(filteredArticles, job.config.focusTopic);
+      // Step 4: Generate multiple blog posts (one per article) with knowledge context
+      this.updateJob(jobId, { status: 'generating', progress: 65 });
+      const generatedPosts = await this.contentAgent.generateMultipleBlogPosts(filteredArticles, job.config.focusTopic, knowledgeContext);
 
       // Step 4: Process each post with review agent
       this.updateJob(jobId, { status: 'reviewing', progress: 80 });

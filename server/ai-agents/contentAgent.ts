@@ -41,7 +41,7 @@ export class ContentAgent {
     this.storage = storage;
   }
 
-  async generateBlogPost(article: NewsArticle, focusTopic?: string): Promise<GeneratedContent> {
+  async generateBlogPost(article: NewsArticle, focusTopic?: string, knowledgeContext?: KnowledgeContext): Promise<GeneratedContent> {
     try {
       console.log(`Generating detailed blog post for: ${article.title}`);
 
@@ -54,7 +54,7 @@ export class ContentAgent {
       };
 
       // Generate enhanced content for single article
-      const prompt = this.buildSingleArticlePrompt(article, focusTopic);
+      const prompt = this.buildSingleArticlePrompt(article, focusTopic, knowledgeContext);
       
       const completion = await this.openai.chat.completions.create({
         model: "gpt-4o", // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
@@ -150,7 +150,7 @@ WRITING STYLE:
   }
 
   // New method for generating multiple posts
-  async generateMultipleBlogPosts(articles: NewsArticle[], focusTopic?: string): Promise<GeneratedContent[]> {
+  async generateMultipleBlogPosts(articles: NewsArticle[], focusTopic?: string, knowledgeContext?: KnowledgeContext): Promise<GeneratedContent[]> {
     console.log(`Generating ${articles.length} individual blog posts...`);
     
     const posts: GeneratedContent[] = [];
@@ -158,7 +158,7 @@ WRITING STYLE:
     // Generate posts for each article individually
     for (const article of articles) {
       try {
-        const post = await this.generateBlogPost(article, focusTopic);
+        const post = await this.generateBlogPost(article, focusTopic, knowledgeContext);
         posts.push(post);
         
         // Add delay to avoid rate limiting
@@ -172,7 +172,7 @@ WRITING STYLE:
     return posts;
   }
 
-  private buildSingleArticlePrompt(article: NewsArticle, focusTopic?: string): string {
+  private buildSingleArticlePrompt(article: NewsArticle, focusTopic?: string, knowledgeContext?: KnowledgeContext): string {
     return `Analyze this AI news article and create a high-quality, insightful blog post:
 
 **Article Details:**
@@ -184,6 +184,25 @@ Content: ${article.content}
 Tags: ${article.tags.join(', ')}
 
 ${focusTopic ? `Special Focus: ${focusTopic}` : ''}
+
+${knowledgeContext ? `
+**Latest Knowledge Context:**
+Current Information: ${knowledgeContext.currentInformation}
+
+Key Findings:
+${knowledgeContext.keyFindings.map(finding => `• ${finding}`).join('\n')}
+
+Recent Developments (2025):
+${knowledgeContext.recentDevelopments.map(dev => `• ${dev}`).join('\n')}
+
+Technical Details: ${knowledgeContext.technicalDetails}
+
+Industry Trends: ${knowledgeContext.industryTrends}
+
+Practical Applications: ${knowledgeContext.practicalApplications}
+
+Use this current knowledge to provide accurate, up-to-date context and insights in your analysis.
+` : ''}
 
 **Analysis Requirements:**
 Transform this news into strategic intelligence by addressing:
