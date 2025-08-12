@@ -16,55 +16,12 @@ import ReactMarkdown from "react-markdown";
 import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
 import { tomorrow } from "react-syntax-highlighter/dist/esm/styles/prism";
 import remarkGfm from "remark-gfm";
-import mermaid from "mermaid";
-import { useEffect, useRef } from "react";
+import { useRef } from "react";
 import { Link } from "wouter";
 import { Loader2 } from "lucide-react";
 import type { PostWithDetails } from "@shared/schema";
 
-// Mermaid Diagram Component
-function MermaidDiagram({ chart }: { chart: string }) {
-  const ref = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    if (ref.current && chart) {
-      const renderMermaid = async () => {
-        try {
-          // Initialize mermaid
-          mermaid.initialize({
-            startOnLoad: false,
-            theme: 'default',
-            securityLevel: 'loose',
-            fontFamily: 'inherit',
-          });
-
-          const id = `mermaid-${Math.random().toString(36).substr(2, 9)}`;
-          
-          // Create a temporary element for rendering
-          const tempDiv = document.createElement('div');
-          tempDiv.innerHTML = `<div class="mermaid">${chart}</div>`;
-          
-          // Use the new async render API
-          const { svg } = await mermaid.render(id, chart);
-          
-          if (ref.current) {
-            ref.current.innerHTML = svg;
-          }
-        } catch (error) {
-          console.error('Mermaid rendering error:', error);
-          // Fallback to showing code block
-          if (ref.current) {
-            ref.current.innerHTML = `<pre class="bg-gray-100 dark:bg-gray-800 p-4 rounded-lg overflow-x-auto"><code>${chart}</code></pre>`;
-          }
-        }
-      };
-
-      renderMermaid();
-    }
-  }, [chart]);
-
-  return <div ref={ref} className="my-6 flex justify-center" />;
-}
 
 export default function Post() {
   const params = useParams();
@@ -313,9 +270,16 @@ export default function Post() {
                 const match = /language-(\w+)/.exec(className || "");
                 const language = match ? match[1] : '';
                 
-                // Handle Mermaid diagrams
+                // Mermaid diagrams temporarily disabled - display as code blocks
                 if (language === 'mermaid') {
-                  return <MermaidDiagram chart={String(children).replace(/\n$/, "")} />;
+                  return (
+                    <div className="my-4 p-4 bg-gray-100 dark:bg-gray-800 rounded-lg">
+                      <div className="text-sm text-gray-600 dark:text-gray-400 mb-2">Mermaid Diagram:</div>
+                      <pre className="text-sm overflow-x-auto">
+                        <code>{String(children).replace(/\n$/, "")}</code>
+                      </pre>
+                    </div>
+                  );
                 }
                 
                 return !inline && match ? (
