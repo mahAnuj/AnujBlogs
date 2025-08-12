@@ -88,12 +88,17 @@ TAG GUIDELINES:
 
       const generated = JSON.parse(completion.choices[0].message.content || '{}');
 
+      // Fix double-wrapped Mermaid code blocks that break markdown parsing
+      let content = generated.content || '';
+      content = content.replace(/```mermaid\s*```mermaid/g, '```mermaid');
+      content = content.replace(/```\s*```/g, '```');
+
       // Add proper tags based on content analysis
       const enhancedTags = this.enhanceTags(generated.tags || [], generated.content, article);
       
       return {
         title: generated.title || article.title,
-        content: generated.content || '',
+        content: content,
         summary: generated.summary || 'A detailed analysis of recent AI developments.',
         tags: enhancedTags,
         sources: [source],
