@@ -114,6 +114,12 @@ export default function AIDashboard() {
     refetchInterval: 5000, // Check for new drafts every 5 seconds
   });
 
+  // Query for published posts
+  const { data: publishedPosts = [], refetch: refetchPosts } = useQuery<any[]>({
+    queryKey: ["/api/posts"],
+    refetchInterval: 10000, // Check for posts every 10 seconds
+  });
+
   // Mutations
   const startGenerationMutation = useMutation({
     mutationFn: async (config: typeof generationConfig) => {
@@ -152,6 +158,28 @@ export default function AIDashboard() {
       toast({
         title: "Cancel Failed",
         description: error.message || "Failed to cancel job",
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Delete post mutation
+  const deletePostMutation = useMutation({
+    mutationFn: async (postId: string) => {
+      const response = await apiRequest("DELETE", `/api/posts/${postId}`);
+      return response.json();
+    },
+    onSuccess: () => {
+      toast({
+        title: "Post Deleted",
+        description: "The post has been successfully deleted.",
+      });
+      refetchPosts();
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Delete Failed",
+        description: error.message || "Failed to delete post",
         variant: "destructive",
       });
     },
@@ -223,13 +251,85 @@ export default function AIDashboard() {
       </div>
 
       <Tabs defaultValue="control" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-5">
+        <TabsList className="grid w-full grid-cols-6">
           <TabsTrigger value="control">Control Panel</TabsTrigger>
+          <TabsTrigger value="posts">Published Posts</TabsTrigger>
           <TabsTrigger value="drafts">Drafts ({draftPosts.length})</TabsTrigger>
           <TabsTrigger value="jobs">Jobs</TabsTrigger>
           <TabsTrigger value="news">News Preview</TabsTrigger>
           <TabsTrigger value="stats">Statistics</TabsTrigger>
         </TabsList>
+
+        {/* Published Posts Management */}
+        <TabsContent value="posts" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <FileText className="h-5 w-5" />
+                Published Posts ({publishedPosts.length})
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {publishedPosts.length === 0 ? (
+                <div className="text-center py-8">
+                  <p className="text-gray-500">No published posts yet.</p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {publishedPosts.map((post) => (
+                    <div key={post.id} className="p-4 border rounded-lg">
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1">
+                          <h3 className="font-semibold text-lg mb-1">{post.title}</h3>
+                          <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">{post.excerpt}</p>
+                          <div className="flex items-center gap-4 text-sm text-gray-500">
+                            <span>Published: {new Date(post.publishedAt).toLocaleDateString()}</span>
+                            <span>{post.readTime} min read</span>
+                            <span>{post.views} views</span>
+                            <span>{post.likes} likes</span>
+                          </div>
+                          <div className="flex flex-wrap gap-1 mt-2">
+                            {post.tags?.map((tag: string) => (
+                              <Badge key={tag} variant="secondary" className="text-xs">
+                                {tag}
+                              </Badge>
+                            ))}
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2 ml-4">
+                          <Button asChild size="sm" variant="outline">
+                            <Link href={`/post/${post.slug}`} className="flex items-center gap-1">
+                              <Eye className="h-4 w-4" />
+                              View
+                            </Link>
+                          </Button>
+                          <Button asChild size="sm" variant="outline">
+                            <Link href={`/create-markdown?edit=${post.id}`} className="flex items-center gap-1">
+                              <Edit className="h-4 w-4" />
+                              Edit
+                            </Link>
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="destructive"
+                            onClick={() => {
+                              if (window.confirm('Are you sure you want to delete this post?')) {
+                                deletePostMutation.mutate(post.id);
+                              }
+                            }}
+                            disabled={deletePostMutation.isPending}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
 
         {/* Control Panel */}
         <TabsContent value="control" className="space-y-6">

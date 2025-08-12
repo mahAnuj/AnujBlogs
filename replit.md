@@ -9,8 +9,9 @@ This is Anuj's Blog - an advanced multi-agent AI system that automatically fetch
 Preferred communication style: Simple, everyday language.
 Blog branding: Clean "Anuj's Blog" name without subtitle references to anujmahajan.dev.
 Content organization: Dynamic tag-based system instead of fixed categories for flexible content management.
-Navigation topics: Header features AI/LLM-focused topics (AI, LLM, Machine Learning, Backend) instead of dynamic tags.
-Header navigation: Only "All posts" and "AI" as main navigation items.
+Header navigation: Minimalist design with no public navigation links ("All Posts", "AI" removed) - admin features only.
+Admin dashboard: Must include published post management with edit and delete capabilities.
+Code cleanup: All Notion-related code removed from the project.
 Popular tags: AI (guaranteed), one famous frontend tag, one backend tag, and trending topics.
 
 ## System Architecture

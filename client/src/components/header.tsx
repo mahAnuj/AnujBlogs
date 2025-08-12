@@ -45,32 +45,8 @@ export function Header() {
             </Link>
           </div>
 
-          {/* Desktop Navigation */}
-          <nav className="hidden md:flex items-center space-x-8">
-            <Link href="/" className={cn(
-              "font-medium transition-colors",
-              isActive("/") 
-                ? "text-primary border-b-2 border-primary pb-1" 
-                : "text-gray-600 dark:text-gray-300 hover:text-primary"
-            )}>
-              All Posts
-            </Link>
-            
-            {headerTopics.map((topic) => (
-              <Link 
-                key={topic.slug} 
-                href={`/?tag=${topic.slug}`}
-                className={cn(
-                  "font-medium transition-colors px-3 py-1 rounded-full text-sm",
-                  isActiveTag(topic.slug)
-                    ? "bg-primary text-white"
-                    : "bg-gray-100 dark:bg-slate-700 text-gray-600 dark:text-gray-300 hover:bg-primary hover:text-white"
-                )}
-              >
-                {topic.name}
-              </Link>
-            ))}
-          </nav>
+          {/* Spacer for layout */}
+          <div className="flex-1"></div>
 
           {/* Search and Controls */}
           <div className="flex items-center space-x-4">
@@ -145,37 +121,7 @@ export function Header() {
                 <SearchBar />
               </div>
 
-              {/* Mobile Navigation */}
-              <nav className="flex flex-col space-y-2">
-                <Link 
-                  href="/"
-                  className={cn(
-                    "block px-3 py-2 rounded-md font-medium transition-colors",
-                    isActive("/") 
-                      ? "text-primary bg-primary bg-opacity-10" 
-                      : "text-gray-600 dark:text-gray-300 hover:text-primary hover:bg-gray-50 dark:hover:bg-slate-700"
-                  )}
-                  onClick={() => setIsMobileMenuOpen(false)}
-                >
-                  All Posts
-                </Link>
-                
-                {headerTopics.map((topic) => (
-                  <Link 
-                    key={topic.slug} 
-                    href={`/?tag=${topic.slug}`}
-                    className={cn(
-                      "block px-3 py-2 rounded-md font-medium transition-colors",
-                      isActiveTag(topic.slug)
-                        ? "text-primary bg-primary bg-opacity-10"
-                        : "text-gray-600 dark:text-gray-300 hover:text-primary hover:bg-gray-50 dark:hover:bg-slate-700"
-                    )}
-                    onClick={() => setIsMobileMenuOpen(false)}
-                  >
-                    {topic.name}
-                  </Link>
-                ))}
-              </nav>
+
 
               {/* Mobile Admin Actions */}
               {isAdmin && (

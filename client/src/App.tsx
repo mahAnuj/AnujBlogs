@@ -11,7 +11,6 @@ import CreatePost from "@/pages/create-post";
 import CreateMarkdownPost from "@/pages/create-markdown-post";
 import AIDashboard from "@/pages/ai-dashboard";
 import AdminLogin from "@/pages/admin-login";
-import NotionSetup from "@/pages/notion-setup";
 import NotFound from "@/pages/not-found";
 
 function Router() {
@@ -23,7 +22,6 @@ function Router() {
       <Route path="/create-markdown" component={CreateMarkdownPost} />
       <Route path="/ai-dashboard" component={AIDashboard} />
       <Route path="/admin" component={AdminLogin} />
-      <Route path="/notion-setup" component={NotionSetup} />
       <Route path="/category/:category" component={Home} />
       <Route component={NotFound} />
     </Switch>
