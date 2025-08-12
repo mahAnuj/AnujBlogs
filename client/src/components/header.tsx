@@ -2,15 +2,15 @@ import { Link, useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useTheme } from "@/hooks/use-theme";
+import { useAdmin } from "@/hooks/use-admin";
 import { SearchBar } from "@/components/search-bar";
-// Removed useQuery import as we're using static topics now
 import { useState } from "react";
-import { Menu, X, Sun, Moon, Code, Plus, Bot } from "lucide-react";
+import { Menu, X, Sun, Moon, Code, Plus, Bot, LogOut } from "lucide-react";
 import { cn } from "@/lib/utils";
-// Removed Tag import as we're using static topics now
 
 export function Header() {
   const { theme, toggleTheme } = useTheme();
+  const { isAdmin, logout } = useAdmin();
   const [location] = useLocation();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
@@ -79,21 +79,32 @@ export function Header() {
               <SearchBar />
             </div>
 
-            {/* Action Buttons */}
-            <div className="flex items-center gap-2">
-              <Button asChild variant="outline" size="sm" className="hidden md:flex">
-                <Link href="/ai-dashboard" className="flex items-center gap-2">
-                  <Bot className="h-4 w-4" />
-                  AI Dashboard
-                </Link>
-              </Button>
-              <Button asChild size="sm" className="hidden md:flex">
-                <Link href="/create-markdown" className="flex items-center gap-2">
-                  <Plus className="h-4 w-4" />
-                  New Post
-                </Link>
-              </Button>
-            </div>
+            {/* Admin-only Action Buttons */}
+            {isAdmin && (
+              <div className="flex items-center gap-2">
+                <Button asChild variant="outline" size="sm" className="hidden md:flex">
+                  <Link href="/ai-dashboard" className="flex items-center gap-2">
+                    <Bot className="h-4 w-4" />
+                    AI Dashboard
+                  </Link>
+                </Button>
+                <Button asChild size="sm" className="hidden md:flex">
+                  <Link href="/create-markdown" className="flex items-center gap-2">
+                    <Plus className="h-4 w-4" />
+                    New Post
+                  </Link>
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={logout}
+                  className="hidden md:flex text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20"
+                >
+                  <LogOut className="h-4 w-4 mr-1" />
+                  Logout
+                </Button>
+              </div>
+            )}
 
             {/* Theme Toggle */}
             <Button
@@ -165,6 +176,35 @@ export function Header() {
                   </Link>
                 ))}
               </nav>
+
+              {/* Mobile Admin Actions */}
+              {isAdmin && (
+                <div className="border-t border-gray-200 dark:border-slate-700 pt-4 mt-4 space-y-2">
+                  <Button asChild className="w-full justify-start">
+                    <Link href="/ai-dashboard" onClick={() => setIsMobileMenuOpen(false)}>
+                      <Bot className="h-4 w-4 mr-2" />
+                      AI Dashboard
+                    </Link>
+                  </Button>
+                  <Button asChild variant="outline" className="w-full justify-start">
+                    <Link href="/create-markdown" onClick={() => setIsMobileMenuOpen(false)}>
+                      <Plus className="h-4 w-4 mr-2" />
+                      New Post
+                    </Link>
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    onClick={() => {
+                      logout();
+                      setIsMobileMenuOpen(false);
+                    }}
+                    className="w-full justify-start text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20"
+                  >
+                    <LogOut className="h-4 w-4 mr-2" />
+                    Logout
+                  </Button>
+                </div>
+              )}
             </div>
           </div>
         )}

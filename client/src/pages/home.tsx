@@ -197,7 +197,7 @@ export default function Home() {
                 </div>
               </div>
               <p className="text-gray-300 mb-6 max-w-md">
-                Empowering developers with the latest insights in AI/LLM, backend technologies, frontend frameworks, and modern hosting solutions.
+                Your premier destination for cutting-edge AI insights, machine learning breakthroughs, and the latest developments in artificial intelligence technology.
               </p>
             </div>
 
@@ -216,8 +216,23 @@ export default function Home() {
             </div>
 
             <div>
-              <h4 className="text-lg font-semibold mb-4">Resources</h4>
+              <h4 className="text-lg font-semibold mb-4">AI Resources</h4>
               <ul className="space-y-2 text-gray-300">
+                <li>
+                  <a href="https://openai.com" className="hover:text-white transition-colors">
+                    OpenAI
+                  </a>
+                </li>
+                <li>
+                  <a href="https://www.anthropic.com" className="hover:text-white transition-colors">
+                    Anthropic
+                  </a>
+                </li>
+                <li>
+                  <a href="https://deepmind.google" className="hover:text-white transition-colors">
+                    Google DeepMind
+                  </a>
+                </li>
                 <li>
                   <a href="https://anujmahajan.dev" className="hover:text-white transition-colors">
                     Portfolio
