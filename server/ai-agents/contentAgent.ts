@@ -389,6 +389,41 @@ ${sources.map(source => `- **[${source.title}](${source.url})** - ${source.publi
     }
   }
 
+  private async webSearch(query: string): Promise<string> {
+    try {
+      // Use OpenAI to simulate web search with current knowledge
+      const searchCompletion = await this.openai.chat.completions.create({
+        model: "gpt-4o",
+        messages: [
+          {
+            role: "system",
+            content: "You are a web search results aggregator. Provide comprehensive, current information about the search query as if you had just searched the web. Include relevant facts, recent developments, industry insights, and authoritative perspectives."
+          },
+          {
+            role: "user",
+            content: `Search query: ${query}
+            
+Please provide detailed, current information about this topic including:
+- Recent developments and news
+- Key industry players and perspectives  
+- Technical details and implementations
+- Real-world applications and examples
+- Current trends and future outlook
+
+Format as natural search results with authoritative information.`
+          }
+        ],
+        temperature: 0.3,
+        max_tokens: 800
+      });
+
+      return searchCompletion.choices[0]?.message?.content || `No current information found for: ${query}`;
+    } catch (error) {
+      console.error(`Web search failed for query "${query}":`, error);
+      return `Unable to retrieve information for: ${query}`;
+    }
+  }
+
   private async researchTopic(topic: string): Promise<string> {
     try {
       console.log(`Researching current trends for: ${topic}`);
@@ -489,7 +524,7 @@ ${sources.map(source => `- **[${source.title}](${source.url})** - ${source.publi
       const searchResults = await Promise.all(
         searchQueries.map(async (query) => {
           try {
-            const result = await webSearch(query);
+            const result = await this.webSearch(query);
             return `**Search: "${query}"**\n${result}\n\n`;
           } catch (error) {
             console.error(`Web search failed for query "${query}":`, error);
@@ -612,7 +647,7 @@ ${sources.map(source => `- **[${source.title}](${source.url})** - ${source.publi
 - Practical applications and next steps`;
   }
 
-  async generateCustomBlogPost(topic: string): Promise<GeneratedContent> {
+  async generateCustomBlogPost(topic: string, userPrompt?: string): Promise<GeneratedContent> {
     try {
       console.log(`Generating custom blog post for topic: ${topic}`);
 
@@ -625,7 +660,7 @@ ${sources.map(source => `- **[${source.title}](${source.url})** - ${source.publi
       // Step 2: Get related content from our site for internal linking
       const relatedPosts = await this.findRelatedContent(topic);
 
-      const prompt = `You are an expert technical writer creating a unique, valuable blog post about: "${topic}"
+      let prompt = `You are an expert technical writer creating a unique, valuable blog post about: "${topic}"
 
 **Latest Web Research:**
 ${webResearchData}
@@ -634,7 +669,19 @@ ${webResearchData}
 ${trendsData}
 
 **Related Content on Our Site:**
-${relatedPosts.length > 0 ? relatedPosts.map(post => `- [${post.title}](${post.slug}): ${post.excerpt}`).join('\n') : 'No related content found.'}
+${relatedPosts.length > 0 ? relatedPosts.map(post => `- [${post.title}](${post.slug}): ${post.excerpt}`).join('\n') : 'No related content found.'}`;
+
+      // Add user prompt if provided
+      if (userPrompt) {
+        prompt += `
+
+**USER INSTRUCTIONS:**
+${userPrompt}
+
+IMPORTANT: Follow the user instructions above while maintaining all other requirements below.`;
+      }
+
+      prompt += `
 
 **AUDIENCE: Young Developer Community**
 Target passionate, curious developers who want to stay ahead of the curve. They value:

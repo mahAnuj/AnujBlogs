@@ -5,6 +5,7 @@ import { useAdmin } from "@/hooks/use-admin";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
@@ -87,6 +88,7 @@ export default function AIDashboard() {
   });
 
   const [customBlogTopic, setCustomBlogTopic] = useState("");
+  const [customUserPrompt, setCustomUserPrompt] = useState("");
 
   // Redirect non-admin users to login
   if (!isAdmin) {
@@ -146,8 +148,8 @@ export default function AIDashboard() {
   });
 
   const generateCustomBlogMutation = useMutation({
-    mutationFn: async (topic: string) => {
-      const response = await apiRequest("POST", "/api/ai/generate-custom", { topic });
+    mutationFn: async (data: { topic: string; userPrompt?: string }) => {
+      const response = await apiRequest("POST", "/api/ai/generate-custom", data);
       return response.json();
     },
     onSuccess: (data: any) => {
@@ -156,6 +158,7 @@ export default function AIDashboard() {
         description: `Started generating blog post about "${customBlogTopic}".`,
       });
       setCustomBlogTopic("");
+      setCustomUserPrompt("");
       refetchJobs();
     },
     onError: (error: any) => {
@@ -231,7 +234,10 @@ export default function AIDashboard() {
       });
       return;
     }
-    generateCustomBlogMutation.mutate(customBlogTopic.trim());
+    generateCustomBlogMutation.mutate({ 
+      topic: customBlogTopic.trim(),
+      userPrompt: customUserPrompt.trim() || undefined
+    });
   };
 
   const getStatusColor = (status: string) => {
@@ -447,8 +453,8 @@ export default function AIDashboard() {
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="flex gap-4">
-                <div className="flex-1">
+              <div className="space-y-4">
+                <div>
                   <Label htmlFor="customTopic">Blog Topic</Label>
                   <Input
                     id="customTopic"
@@ -456,14 +462,28 @@ export default function AIDashboard() {
                     value={customBlogTopic}
                     onChange={(e) => setCustomBlogTopic(e.target.value)}
                     onKeyDown={(e) => {
-                      if (e.key === 'Enter' && !e.shiftKey) {
+                      if (e.key === 'Enter' && !e.shiftKey && !customUserPrompt.trim()) {
                         e.preventDefault();
                         handleGenerateCustomBlog();
                       }
                     }}
                   />
                 </div>
-                <div className="flex items-end">
+                <div>
+                  <Label htmlFor="customPrompt">Custom Instructions (Optional)</Label>
+                  <Textarea
+                    id="customPrompt"
+                    placeholder="e.g., Include sections on: history, current applications, future trends. Focus on practical examples for developers. Add code snippets where relevant."
+                    value={customUserPrompt}
+                    onChange={(e) => setCustomUserPrompt(e.target.value)}
+                    rows={3}
+                    className="resize-none"
+                  />
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                    Provide specific instructions about content structure, sections to include, or focus areas
+                  </p>
+                </div>
+                <div className="flex justify-end">
                   <Button 
                     onClick={handleGenerateCustomBlog}
                     disabled={generateCustomBlogMutation.isPending || !customBlogTopic.trim() || runningJobs.length > 0}
@@ -475,7 +495,7 @@ export default function AIDashboard() {
                 </div>
               </div>
               <p className="text-sm text-gray-600 dark:text-gray-400">
-                AI will research and generate a comprehensive blog post on the provided topic.
+                AI will research and generate a comprehensive blog post on the provided topic with your custom instructions.
               </p>
             </CardContent>
           </Card>

@@ -14,6 +14,7 @@ export interface GenerationConfig {
 
 export interface CustomGenerationConfig {
   topic: string;
+  userPrompt?: string | null;
   type: 'custom';
 }
 
@@ -104,7 +105,7 @@ class AIOrchestrator {
     this.jobs.set(jobId, job);
     
     // Start the custom generation process asynchronously
-    this.processCustomGeneration(jobId, config.topic).catch(error => {
+    this.processCustomGeneration(jobId, config.topic, config.userPrompt).catch(error => {
       console.error(`Custom generation job ${jobId} failed:`, error);
       this.updateJob(jobId, {
         status: 'failed',
@@ -116,13 +117,13 @@ class AIOrchestrator {
     return jobId;
   }
 
-  private async processCustomGeneration(jobId: string, topic: string): Promise<void> {
+  private async processCustomGeneration(jobId: string, topic: string, userPrompt?: string | null): Promise<void> {
     console.log(`Starting custom generation job ${jobId} for topic: ${topic}`);
 
     try {
       // Step 1: Generate blog post directly on the topic
       this.updateJob(jobId, { status: 'generating', progress: 30 });
-      const generatedContent = await this.contentAgent.generateCustomBlogPost(topic);
+      const generatedContent = await this.contentAgent.generateCustomBlogPost(topic, userPrompt);
 
       // Step 2: Create diagrams if suggested
       this.updateJob(jobId, { status: 'generating', progress: 60 });

@@ -11,6 +11,7 @@ Blog branding: Clean "Anuj's Blog" name without subtitle references to anujmahaj
 Content organization: Dynamic tag-based system instead of fixed categories for flexible content management.
 Header navigation: Minimalist design with no public navigation links ("All Posts", "AI" removed) - admin features only.
 Admin dashboard: Must include published post management with edit and delete capabilities.
+Custom user prompts: Admin dashboard allows adding custom instructions alongside topics for targeted content generation.
 Code cleanup: All Notion-related code removed from the project.
 Popular tags: AI (guaranteed), one famous frontend tag, one backend tag, and trending topics.
 Content storytelling: Blog content should tell a cohesive story with smooth transitions between sections.
@@ -73,6 +74,7 @@ AI context requirement: All concepts must be explained specifically in relation 
 - **Research-Backed Content**: Uses current trends and developments for relevant, accurate information
 - **Quality Assurance**: Three-stage pipeline (generate → review → enhance) ensures high-quality output
 - **Manual Controls**: Admin dashboard for triggering content generation and reviewing drafts
+- **Custom Instructions**: Users can provide specific prompts with section requirements and focus areas for tailored content
 - **Rich Text**: Markdown support with syntax highlighting and automated diagram insertion
 - **Internal SEO**: Automatic internal linking to related content for better site structure
 - **External References**: Curated links to authoritative sources for deeper learning

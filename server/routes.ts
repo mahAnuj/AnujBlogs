@@ -313,7 +313,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Generate custom blog post on specific topic
   app.post("/api/ai/generate-custom", async (req, res) => {
     try {
-      const { topic } = req.body;
+      const { topic, userPrompt } = req.body;
       
       if (!topic || typeof topic !== 'string' || !topic.trim()) {
         return res.status(400).json({ error: "Topic is required" });
@@ -321,10 +321,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       const jobId = await aiOrchestrator.startCustomGeneration({
         topic: topic.trim(),
+        userPrompt: userPrompt?.trim() || null,
         type: 'custom'
       });
       
-      res.json({ jobId, status: "started", topic: topic.trim() });
+      res.json({ 
+        jobId, 
+        status: "started", 
+        topic: topic.trim(),
+        userPrompt: userPrompt?.trim() || null
+      });
     } catch (error) {
       console.error("Error starting custom blog generation:", error);
       res.status(500).json({ error: "Failed to start custom blog generation" });
