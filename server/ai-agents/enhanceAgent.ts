@@ -121,53 +121,54 @@ Return a JSON object with this exact structure:
     const majorIssues = reviewResult.issues.filter(issue => issue.severity === 'high');
     const minorIssues = reviewResult.issues.filter(issue => issue.severity === 'medium' || issue.severity === 'low');
 
-    return `# Content Enhancement Request
+    // Check if there are storytelling/flow issues
+    const storytellingIssues = reviewResult.issues.filter(issue => issue.type === 'storytelling_flow');
 
-## Original Content
-**Title:** ${content.title}
-**Summary:** ${content.summary}
-**Tags:** ${content.tags.join(', ')}
+    return `Please enhance this blog post content based ONLY on the specific feedback provided. Do NOT make changes based on your own knowledge.
 
-**Content:**
+**ORIGINAL CONTENT:**
+Title: ${content.title}
+Summary: ${content.summary}
+Tags: ${content.tags?.join(', ') || 'None'}
+Content:
 ${content.content}
 
-## Review Feedback (Quality Score: ${reviewResult.qualityScore}/100)
+**SPECIFIC REVIEW FEEDBACK TO ADDRESS:**
 
-### Critical Issues (Must Fix):
-${criticalIssues.map(issue => `- ${issue.description}: ${issue.suggestion}`).join('\n')}
+${criticalIssues.length > 0 ? `**CRITICAL ISSUES (Must Fix):**
+${criticalIssues.map(issue => `- ${issue.description}${issue.suggestion ? ' | Solution: ' + issue.suggestion : ''}`).join('\n')}
+` : ''}
 
-### Major Issues (Should Fix):
-${majorIssues.map(issue => `- ${issue.description}: ${issue.suggestion}`).join('\n')}
+${majorIssues.length > 0 ? `**MAJOR ISSUES (High Priority):**
+${majorIssues.map(issue => `- ${issue.description}${issue.suggestion ? ' | Solution: ' + issue.suggestion : ''}`).join('\n')}
+` : ''}
 
-### Minor Issues (Nice to Fix):
-${minorIssues.map(issue => `- ${issue.description}: ${issue.suggestion}`).join('\n')}
+${storytellingIssues.length > 0 ? `**STORYTELLING & FLOW ISSUES (Priority Focus):**
+${storytellingIssues.map(issue => `- ${issue.description}${issue.suggestion ? ' | Solution: ' + issue.suggestion : ''}`).join('\n')}
+` : ''}
 
-## Enhancement Requirements
+${minorIssues.length > 0 ? `**MINOR IMPROVEMENTS:**
+${minorIssues.map(issue => `- ${issue.description}${issue.suggestion ? ' | Solution: ' + issue.suggestion : ''}`).join('\n')}
+` : ''}
 
-**Primary Goals:**
-1. Fix all critical issues completely
-2. Address major issues where possible
-3. Enhance readability and engagement
-4. Improve technical accuracy and depth
-5. Add practical examples and actionable insights
-6. Optimize for SEO and user experience
+**CRITICAL ENHANCEMENT RULES:**
+- Address ONLY the specific issues listed above
+- Do NOT add content based on your own knowledge or assumptions
+- Focus on fixing the exact problems identified in the review
+- If storytelling issues are mentioned, prioritize smooth transitions and narrative flow
+- If engagement issues are noted, enhance appeal to young developer community
+- Preserve any elements that weren't criticized in the review
 
-**Content Guidelines:**
-- Maintain the core message and structure
-- Enhance with specific examples and case studies
-- Add practical tips and actionable advice
-- Improve transitions between sections
-- Ensure technical accuracy
-- Make it more engaging for the target audience
+${storytellingIssues.length > 0 ? `**STORYTELLING ENHANCEMENT FOCUS:**
+Since storytelling issues were identified, ensure you:
+- Add smooth transitions between sections
+- Create a compelling narrative flow from start to finish
+- Use engaging language that speaks to young developers
+- Include relatable examples and scenarios
+- Build momentum throughout the content
+` : ''}
 
-**Technical Requirements:**
-- Use proper markdown formatting
-- Maintain SEO optimization
-- Keep appropriate length (1000-1500 words)
-- Ensure mobile-friendly structure
-- Include relevant calls-to-action
-
-Please enhance this content by addressing the review feedback and improving overall quality.`;
+Address ONLY the review feedback above. Do not make additional changes.`;
   }
 }
 

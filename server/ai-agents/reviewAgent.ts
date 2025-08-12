@@ -9,7 +9,7 @@ export interface ReviewResult {
 }
 
 export interface ReviewIssue {
-  type: 'factual_error' | 'hallucination' | 'formatting_error' | 'diagram_error' | 'attribution_missing' | 'content_quality' | 'tag_missing' | 'image_error' | 'styling_issue';
+  type: 'factual_error' | 'hallucination' | 'formatting_error' | 'diagram_error' | 'attribution_missing' | 'content_quality' | 'tag_missing' | 'image_error' | 'styling_issue' | 'storytelling_flow';
   severity: 'low' | 'medium' | 'high' | 'critical';
   description: string;
   location?: string;
@@ -396,11 +396,19 @@ Respond with JSON array of issues: [{"type": "factual_error|hallucination", "sev
 3. Are there original insights that add new value to the topic?
 4. Does it avoid rehashing common knowledge without adding value?
 5. Does it provide practical applications or examples not typically covered?
+6. **STORYTELLING FLOW:** Do sections connect smoothly with natural transitions?
+7. **NARRATIVE COHESION:** Does the content tell a compelling story from start to finish?
+8. **DEVELOPER ENGAGEMENT:** Will this capture and maintain young developers' attention?
 
 **Response Format:**
-Provide specific issues with suggestions for improvement. Focus on areas where the content lacks uniqueness or simply restates common knowledge.
+Focus specifically on storytelling issues and section connectivity. Identify where:
+- Sections feel disconnected or abrupt
+- Transitions are missing or weak
+- The narrative loses momentum
+- Content fails to engage the target developer audience
+- The flow doesn't build naturally from concept to concept
 
-Rate the uniqueness on a scale of 1-10 and explain specific areas that need improvement.`;
+Rate both uniqueness AND storytelling flow on separate 1-10 scales.`;
 
       const completion = await this.openai.chat.completions.create({
         model: "gpt-4o",
@@ -437,6 +445,37 @@ Rate the uniqueness on a scale of 1-10 and explain specific areas that need impr
           severity: 'medium',
           description: 'Content provides only surface-level treatment of the topic',
           suggestion: 'Dive deeper into specific aspects and provide expert-level insights'
+        });
+      }
+
+      // Parse for storytelling and flow issues
+      if (response.toLowerCase().includes('disconnected') || response.toLowerCase().includes('abrupt') || 
+          response.toLowerCase().includes('poor transitions') || response.toLowerCase().includes('jarring')) {
+        issues.push({
+          type: 'storytelling_flow',
+          severity: 'high',
+          description: 'Sections feel disconnected with poor transitions between concepts',
+          suggestion: 'Add smooth transitions that connect ideas naturally and maintain narrative flow'
+        });
+      }
+
+      if (response.toLowerCase().includes('loses momentum') || response.toLowerCase().includes('engagement drops') ||
+          response.toLowerCase().includes('not engaging')) {
+        issues.push({
+          type: 'storytelling_flow',
+          severity: 'high',
+          description: 'Content loses reader engagement and fails to maintain momentum',
+          suggestion: 'Restructure content to build excitement progressively and keep developers engaged throughout'
+        });
+      }
+
+      if (response.toLowerCase().includes('missing narrative') || response.toLowerCase().includes('no story') ||
+          response.toLowerCase().includes('fragmented')) {
+        issues.push({
+          type: 'storytelling_flow',
+          severity: 'medium',
+          description: 'Content lacks cohesive narrative structure',
+          suggestion: 'Create a clear story arc that connects all sections and maintains reader interest'
         });
       }
 

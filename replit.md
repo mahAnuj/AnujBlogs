@@ -13,6 +13,9 @@ Header navigation: Minimalist design with no public navigation links ("All Posts
 Admin dashboard: Must include published post management with edit and delete capabilities.
 Code cleanup: All Notion-related code removed from the project.
 Popular tags: AI (guaranteed), one famous frontend tag, one backend tag, and trending topics.
+Content storytelling: Blog content should tell a cohesive story with smooth transitions between sections.
+Target audience: Young developer community - content should create engagement and desire to read more.
+Enhancement approach: EnhanceAgent should work only on ReviewAgent feedback, not its own knowledge.
 
 ## System Architecture
 
@@ -48,13 +51,15 @@ Popular tags: AI (guaranteed), one famous frontend tag, one backend tag, and tre
 ### Enhanced Multi-Agent AI System
 - **News Agent**: Automatically fetches AI news from TechCrunch, arXiv, OpenAI Blog, Anthropic, and Google AI Blog
 - **Content Agent**: Generates unique, valuable blog posts with research-backed insights and internal linking
-- **Review Agent**: Comprehensive content review including uniqueness assessment and reader value analysis
-- **Enhance Agent**: Fixes issues found by review agent to improve content quality and engagement
+- **Review Agent**: Comprehensive content review including uniqueness, reader value, and storytelling flow analysis
+- **Enhance Agent**: Fixes issues found by review agent focusing on narrative cohesion and developer engagement
 - **Orchestrator**: Manages the complete pipeline: generate → review → enhance → save
 - **Research Integration**: Uses current trends and developments to ensure content relevance and accuracy
 - **Internal Linking**: Automatically finds and links to related content on the site for better SEO
 - **Source Attribution**: Ensures all generated content properly credits original authors and sources
 - **Value Creation**: Focuses on correlating different aspects and providing actionable insights not found elsewhere
+- **Storytelling Focus**: Ensures content flows naturally with smooth transitions and maintains developer engagement
+- **Narrative Cohesion**: Creates compelling stories that build momentum from introduction to conclusion
 
 ### Enhanced Content Management
 - **AI-Powered Generation**: Automated blog post creation with uniqueness and value validation
