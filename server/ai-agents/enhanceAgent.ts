@@ -124,6 +124,7 @@ Return a JSON object with this exact structure:
     // Check if there are storytelling/flow issues
     const storytellingIssues = reviewResult.issues.filter(issue => issue.type === 'storytelling_flow');
     const headingIssues = reviewResult.issues.filter(issue => issue.type === 'unprofessional_heading');
+    const topicIssues = reviewResult.issues.filter(issue => issue.type === 'topic_coverage');
 
     return `Please enhance this blog post content based ONLY on the specific feedback provided. Do NOT make changes based on your own knowledge.
 
@@ -153,6 +154,12 @@ ${headingIssues.map(issue => `- ${issue.description}${issue.suggestion ? ' | Sol
 
 IMPORTANT: Replace ALL meta-headings like "Hook Introduction", "Foundation First", "Learning Pathways", "Inspiring Conclusion" with professional, topic-specific headings that add value.
 Examples: "Understanding the Architecture" → "Implementation Strategies" → "Performance Considerations" → "Production Deployment"
+` : ''}
+
+${topicIssues.length > 0 ? `**TOPIC COVERAGE ISSUES (Critical Focus):**
+${topicIssues.map(issue => `- ${issue.description}${issue.suggestion ? ' | Solution: ' + issue.suggestion : ''}`).join('\n')}
+
+CRITICAL: The content must directly address the original user request. If topic coverage is insufficient, refocus the content to better match what the user specifically asked for.
 ` : ''}
 
 ${minorIssues.length > 0 ? `**MINOR IMPROVEMENTS:**

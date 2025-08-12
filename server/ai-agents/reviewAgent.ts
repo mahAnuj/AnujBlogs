@@ -9,7 +9,7 @@ export interface ReviewResult {
 }
 
 export interface ReviewIssue {
-  type: 'factual_error' | 'hallucination' | 'formatting_error' | 'diagram_error' | 'attribution_missing' | 'content_quality' | 'tag_missing' | 'image_error' | 'styling_issue' | 'storytelling_flow';
+  type: 'factual_error' | 'hallucination' | 'formatting_error' | 'diagram_error' | 'attribution_missing' | 'content_quality' | 'tag_missing' | 'image_error' | 'styling_issue' | 'storytelling_flow' | 'unprofessional_heading' | 'topic_coverage';
   severity: 'low' | 'medium' | 'high' | 'critical';
   description: string;
   location?: string;
@@ -29,7 +29,7 @@ export class ReviewAgent {
     });
   }
 
-  async reviewContent(content: GeneratedContent): Promise<ReviewResult> {
+  async reviewContent(content: GeneratedContent, originalTopic?: string, userDescription?: string): Promise<ReviewResult> {
     try {
       console.log('Starting comprehensive content review process...');
 
@@ -42,7 +42,8 @@ export class ReviewAgent {
         tagCheck,
         stylingCheck,
         uniquenessCheck,
-        valueCheck
+        valueCheck,
+        topicCoverageCheck
       ] = await Promise.all([
         this.checkFactualAccuracy(content),
         this.checkDiagramErrors(content),
@@ -51,7 +52,8 @@ export class ReviewAgent {
         this.validateTags(content),
         this.checkStylingIssues(content),
         this.assessContentUniqueness(content),
-        this.assessReaderValue(content)
+        this.assessReaderValue(content),
+        originalTopic ? this.checkTopicCoverage(content, originalTopic, userDescription) : Promise.resolve([])
       ]);
 
       const allIssues: ReviewIssue[] = [
@@ -62,7 +64,8 @@ export class ReviewAgent {
         ...tagCheck,
         ...stylingCheck,
         ...uniquenessCheck,
-        ...valueCheck
+        ...valueCheck,
+        ...topicCoverageCheck
       ];
 
       // Calculate quality score
@@ -610,6 +613,69 @@ Rate the reader value on a scale of 1-10 and explain what would make it more val
       return issues;
     } catch (error) {
       console.error('Error assessing reader value:', error);
+      return [];
+    }
+  }
+
+  private async checkTopicCoverage(content: GeneratedContent, originalTopic: string, userDescription?: string): Promise<ReviewIssue[]> {
+    try {
+      console.log('Checking topic coverage against original user request...');
+
+      const prompt = `You are reviewing a blog post from an end user's perspective. The user requested content on a specific topic with their own description/requirements.
+
+**ORIGINAL USER REQUEST:**
+Topic: ${originalTopic}
+${userDescription ? `User Description/Requirements: ${userDescription}` : ''}
+
+**GENERATED CONTENT:**
+Title: ${content.title}
+Summary: ${content.summary}
+Content: ${content.content}
+Tags: ${content.tags?.join(', ') || 'None'}
+
+**EVALUATION TASK:**
+As an end user who requested this content, evaluate:
+
+1. **Core Topic Coverage**: Does the blog directly address the main topic I requested?
+2. **User Intent Fulfillment**: Does it cover what I specifically asked for in my description?
+3. **Expectation Alignment**: Would I feel satisfied that my request was understood and fulfilled?
+4. **Relevance**: Are there important aspects of my original request that are missing or inadequately covered?
+5. **Focus**: Does the content stay focused on my topic or drift into unrelated areas?
+
+**RESPOND WITH JSON:**
+{
+  "issues": [
+    {
+      "type": "topic_coverage",
+      "severity": "low|medium|high|critical", 
+      "description": "Specific issue with topic coverage",
+      "location": "title|content|summary",
+      "suggestion": "Specific suggestion for improvement"
+    }
+  ]
+}
+
+Be critical and thorough - if the content doesn't adequately address the original user request, flag it as an issue.`;
+
+      const completion = await this.openai.chat.completions.create({
+        model: "gpt-4o",
+        messages: [
+          {
+            role: "user",
+            content: prompt
+          }
+        ],
+        response_format: { type: "json_object" },
+        temperature: 0.1,
+        max_tokens: 1000
+      });
+
+      const result = JSON.parse(completion.choices[0].message.content || '{"issues": []}');
+      console.log(`Topic coverage check completed: ${result.issues?.length || 0} issues found`);
+      
+      return result.issues || [];
+    } catch (error) {
+      console.error('Error checking topic coverage:', error);
       return [];
     }
   }

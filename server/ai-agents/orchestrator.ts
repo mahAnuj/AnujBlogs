@@ -142,7 +142,7 @@ class AIOrchestrator {
 
       // Step 3: Review content with AI review agent
       this.updateJob(jobId, { status: 'reviewing', progress: 60 });
-      const reviewResult = await this.reviewAgent.reviewContent(generatedContent);
+      const reviewResult = await this.reviewAgent.reviewContent(generatedContent, topic, userPrompt || undefined);
       
       // Step 4: Enhance content if review found issues
       let finalContent = generatedContent;
@@ -228,7 +228,7 @@ class AIOrchestrator {
           }
 
           // Review content with AI review agent
-          const reviewResult = await this.reviewAgent.reviewContent(generatedContent);
+          const reviewResult = await this.reviewAgent.reviewContent(generatedContent, job.config.focusTopic);
           
           // Enhance content if review found issues
           let finalContent = generatedContent;
