@@ -1607,10 +1607,19 @@ This article synthesizes information from the following sources:
     if (!post) return undefined;
 
     // Fix malformed Mermaid blocks in content if present
-    let content = updatePost.content || post.content;
-    if (content && typeof content === 'string') {
+    let content = updatePost.content;
+    if (content && typeof content === 'string' && content !== 'trigger_fix') {
       content = content.replace(/```mermaid\s*```mermaid/g, '```mermaid');
       content = content.replace(/```\s*```/g, '```');
+    } else if (content === 'trigger_fix') {
+      // Special case: restore and fix original content
+      content = post.content;
+      if (content && typeof content === 'string') {
+        content = content.replace(/```mermaid\s*```mermaid/g, '```mermaid');
+        content = content.replace(/```\s*```/g, '```');
+      }
+    } else {
+      content = post.content;
     }
 
     const updatedPost: Post = {
