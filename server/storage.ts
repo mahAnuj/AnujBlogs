@@ -1358,7 +1358,7 @@ Replit provides an excellent platform for deploying full-stack applications with
         publishedAt: new Date("2024-01-05T12:00:00Z"),
         createdAt: new Date("2024-01-05T12:00:00Z"),
         updatedAt: new Date("2024-01-05T12:00:00Z"),
-      }
+      },
       // Add AI-generated sample post to show how it looks
       {
         id: "ai-post-sample",
@@ -1854,4 +1854,262 @@ export class NotionStorage extends MemStorage implements IStorage {
 }
 
 // Use memory storage for reliable local development
-export const storage = new MemStorage();
+// Database storage implementation using PostgreSQL
+import { db } from "./db";
+import { eq, ilike, or, inArray, sql } from "drizzle-orm";
+import { users, categories, tags, posts, comments, insertUserSchema, insertCategorySchema, insertTagSchema, insertPostSchema, insertCommentSchema } from "@shared/schema";
+
+export class DatabaseStorage implements IStorage {
+  // Users
+  async getUser(id: string): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.id, id));
+    return user || undefined;
+  }
+
+  async getUserByEmail(email: string): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.email, email));
+    return user || undefined;
+  }
+
+  async createUser(insertUser: InsertUser): Promise<User> {
+    const [user] = await db.insert(users).values({
+      ...insertUser,
+      id: randomUUID(),
+      createdAt: new Date(),
+      avatar: insertUser.avatar || null
+    }).returning();
+    return user;
+  }
+
+  // Categories
+  async getCategories(): Promise<Category[]> {
+    return await db.select().from(categories);
+  }
+
+  async getCategory(id: string): Promise<Category | undefined> {
+    const [category] = await db.select().from(categories).where(eq(categories.id, id));
+    return category || undefined;
+  }
+
+  async getCategoryBySlug(slug: string): Promise<Category | undefined> {
+    const [category] = await db.select().from(categories).where(eq(categories.slug, slug));
+    return category || undefined;
+  }
+
+  async createCategory(insertCategory: InsertCategory): Promise<Category> {
+    const [category] = await db.insert(categories).values({
+      ...insertCategory,
+      id: randomUUID(),
+      createdAt: new Date(),
+      description: insertCategory.description || null
+    }).returning();
+    return category;
+  }
+
+  // Tags
+  async getTags(): Promise<Tag[]> {
+    return await db.select().from(tags);
+  }
+
+  async getTag(id: string): Promise<Tag | undefined> {
+    const [tag] = await db.select().from(tags).where(eq(tags.id, id));
+    return tag || undefined;
+  }
+
+  async getTagBySlug(slug: string): Promise<Tag | undefined> {
+    const [tag] = await db.select().from(tags).where(eq(tags.slug, slug));
+    return tag || undefined;
+  }
+
+  async createTag(insertTag: InsertTag): Promise<Tag> {
+    const [tag] = await db.insert(tags).values({
+      ...insertTag,
+      id: randomUUID(),
+      createdAt: new Date()
+    }).returning();
+    return tag;
+  }
+
+  // Posts
+  async getPosts(filters?: { category?: string; tag?: string; search?: string; status?: string }): Promise<PostWithDetails[]> {
+    // Get basic post data first
+    const postsData = await db.select().from(posts).orderBy(posts.publishedAt);
+    
+    // For each post, get author and category data
+    const result: PostWithDetails[] = [];
+    
+    for (const post of postsData) {
+      const [author] = await db.select().from(users).where(eq(users.id, post.authorId));
+      const [category] = await db.select().from(categories).where(eq(categories.id, post.categoryId));
+      
+      // Apply filters
+      let shouldInclude = true;
+      
+      if (filters?.status && post.status !== filters.status) {
+        shouldInclude = false;
+      }
+      
+      if (filters?.category && category?.slug !== filters.category) {
+        shouldInclude = false;
+      }
+      
+      if (filters?.search) {
+        const searchLower = filters.search.toLowerCase();
+        if (!post.title.toLowerCase().includes(searchLower) &&
+            !post.excerpt.toLowerCase().includes(searchLower) &&
+            !post.content.toLowerCase().includes(searchLower)) {
+          shouldInclude = false;
+        }
+      }
+      
+      if (shouldInclude) {
+        result.push({
+          ...post,
+          author: author || null,
+          category: category || null
+        });
+      }
+    }
+    
+    return result.reverse(); // Most recent first
+  }
+
+  async getPost(id: string): Promise<PostWithDetails | undefined> {
+    const [post] = await db.select().from(posts).where(eq(posts.id, id));
+    if (!post) return undefined;
+    
+    const [author] = await db.select().from(users).where(eq(users.id, post.authorId));
+    const [category] = await db.select().from(categories).where(eq(categories.id, post.categoryId));
+    
+    return {
+      ...post,
+      author: author || null,
+      category: category || null
+    };
+  }
+
+  async getPostBySlug(slug: string): Promise<PostWithDetails | undefined> {
+    const [post] = await db.select().from(posts).where(eq(posts.slug, slug));
+    if (!post) return undefined;
+    
+    const [author] = await db.select().from(users).where(eq(users.id, post.authorId));
+    const [category] = await db.select().from(categories).where(eq(categories.id, post.categoryId));
+    
+    return {
+      ...post,
+      author: author || null,
+      category: category || null
+    };
+  }
+
+  async createPost(insertPost: InsertPost): Promise<Post> {
+    const [post] = await db.insert(posts).values({
+      ...insertPost,
+      id: randomUUID(),
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      publishedAt: insertPost.publishedAt || new Date(),
+      featuredImage: insertPost.featuredImage || null,
+      metaTitle: insertPost.metaTitle || null,
+      metaDescription: insertPost.metaDescription || null,
+      metadata: insertPost.metadata || null
+    }).returning();
+    return post;
+  }
+
+  async updatePost(id: string, updatePost: UpdatePost): Promise<Post | undefined> {
+    const [post] = await db.update(posts)
+      .set({ ...updatePost, updatedAt: new Date() })
+      .where(eq(posts.id, id))
+      .returning();
+    return post || undefined;
+  }
+
+  async deletePost(id: string): Promise<boolean> {
+    const result = await db.delete(posts).where(eq(posts.id, id));
+    return result.rowCount > 0;
+  }
+
+  async incrementPostViews(id: string): Promise<void> {
+    await db.update(posts)
+      .set({ views: sql`${posts.views} + 1` })
+      .where(eq(posts.id, id));
+  }
+
+  async incrementPostLikes(id: string): Promise<void> {
+    await db.update(posts)
+      .set({ likes: sql`${posts.likes} + 1` })
+      .where(eq(posts.id, id));
+  }
+
+  // Comments
+  async getCommentsByPost(postId: string): Promise<CommentWithReplies[]> {
+    const allComments = await db.select().from(comments)
+      .where(eq(comments.postId, postId))
+      .orderBy(comments.createdAt);
+
+    // Get author data for each comment
+    const commentsWithAuthors: CommentWithReplies[] = [];
+    
+    for (const comment of allComments) {
+      const [author] = await db.select().from(users).where(eq(users.id, comment.authorId));
+      commentsWithAuthors.push({
+        ...comment,
+        author: author || null,
+        replies: []
+      });
+    }
+
+    // Convert to nested structure
+    const commentsMap = new Map();
+    const topLevelComments: CommentWithReplies[] = [];
+
+    commentsWithAuthors.forEach(comment => {
+      commentsMap.set(comment.id, comment);
+      if (!comment.parentId) {
+        topLevelComments.push(comment);
+      }
+    });
+
+    commentsWithAuthors.forEach(comment => {
+      if (comment.parentId) {
+        const parent = commentsMap.get(comment.parentId);
+        if (parent) {
+          parent.replies.push(comment);
+        }
+      }
+    });
+
+    return topLevelComments;
+  }
+
+  async getComment(id: string): Promise<Comment | undefined> {
+    const [comment] = await db.select().from(comments).where(eq(comments.id, id));
+    return comment || undefined;
+  }
+
+  async createComment(insertComment: InsertComment): Promise<Comment> {
+    const [comment] = await db.insert(comments).values({
+      ...insertComment,
+      id: randomUUID(),
+      createdAt: new Date(),
+      updatedAt: new Date()
+    }).returning();
+    return comment;
+  }
+
+  async incrementCommentLikes(id: string): Promise<void> {
+    await db.update(comments)
+      .set({ likes: sql`${comments.likes} + 1` })
+      .where(eq(comments.id, id));
+  }
+
+  async approveComment(id: string): Promise<void> {
+    await db.update(comments)
+      .set({ status: 'approved' })
+      .where(eq(comments.id, id));
+  }
+}
+
+// Use DatabaseStorage instead of MemStorage for persistent data
+export const storage = new DatabaseStorage();
