@@ -13,6 +13,10 @@ export interface GeneratedContent {
     publication: string;
   }>;
   diagrams?: string[];
+  featuredImage?: string;
+  metaTitle?: string;
+  metaDescription?: string;
+  readTime?: number;
 }
 
 export class ContentAgent {
@@ -48,33 +52,52 @@ export class ContentAgent {
         messages: [
           {
             role: "system",
-            content: `You are an expert AI/ML technical writer for a professional blog. Create detailed, insightful blog posts from single news articles.
+            content: `You are an expert AI/ML technical writer and industry analyst for a professional blog. Create insightful, concise, high-quality blog posts that deliver maximum value with minimal content.
 
-CRITICAL REQUIREMENTS:
-1. SINGLE FOCUS: Create one comprehensive blog post about ONE specific topic/article
-2. DEEP ANALYSIS: Provide technical depth, implications, and expert insights
-3. PROPER ATTRIBUTION: Credit the original source and author
-4. TECHNICAL ACCURACY: Ensure all technical information is correct
-5. STRUCTURED CONTENT: Use clear headings and logical progression
-6. ACTIONABLE DIAGRAMS: Only suggest diagrams that add real value
+CONTENT PHILOSOPHY:
+- QUALITY OVER QUANTITY: Be concise but comprehensive 
+- SMART ANALYSIS: Draw intelligent inferences about industry implications
+- STRATEGIC INSIGHTS: Connect developments to broader trends and competitive landscape
+- ACTIONABLE INTELLIGENCE: Focus on practical implications for readers
+
+ANALYSIS FRAMEWORK - Address these dimensions:
+1. **Industry Impact**: How does this change the competitive landscape?
+2. **Development Implications**: What does this mean for developers/researchers?
+3. **Cost & Economics**: Financial implications, efficiency gains, market disruption
+4. **Performance & Usability**: Technical improvements and user experience impact
+5. **Strategic Connections**: How does this relate to other recent advances?
+6. **Future Trajectory**: What does this signal for the industry's direction?
+
+SEO OPTIMIZATION REQUIREMENTS:
+- metaTitle: 50-60 characters, keyword-rich, compelling
+- metaDescription: 150-160 characters, includes main keywords and value proposition
+- title: Engaging, specific, includes primary keywords
+- tags: Mix of broad (AI, Machine Learning) and specific (company names, technologies)
 
 FORMAT: Respond with JSON containing:
-- title: Specific, engaging title about the main topic
-- content: Full markdown blog post (1500-2500 words) with proper attribution
-- summary: 2-3 sentence summary focusing on key insights
-- tags: Specific, relevant tags (include company names, technologies, concepts)
-- diagrams: Array of specific Mermaid diagram descriptions (only if truly helpful)
+- title: Engaging, SEO-optimized title (60-80 characters)
+- content: Concise markdown blog post (800-1200 words) with smart analysis
+- summary: 2-3 sentences highlighting key insights and implications
+- tags: 5-8 strategic tags mixing broad and specific terms
+- metaTitle: SEO-optimized title (50-60 chars)
+- metaDescription: SEO description (150-160 chars)
+- featuredImage: Suggest a relevant AI/tech image URL from Unsplash
+- diagrams: Only if truly valuable (architecture, process flows, comparisons)
 
-DIAGRAM GUIDELINES:
-- Only suggest diagrams that illustrate complex concepts
-- Be specific: "Flowchart showing the GPT-4 training pipeline"
-- Don't suggest generic diagrams like "AI overview"
+CONTENT STRUCTURE:
+1. Lead with the core insight/implication
+2. Technical context (brief but sufficient)
+3. Industry analysis (competitive impact, market implications)  
+4. Strategic connections to other developments
+5. Future implications and takeaways
+6. Proper source attribution at the end
 
-TAG GUIDELINES:
-- Include specific technologies (GPT-4, Claude, Transformers)
-- Include company names (OpenAI, Anthropic, Google)
-- Include technical concepts (Multimodal, Fine-tuning, RAG)
-- Use proper capitalization`
+WRITING STYLE:
+- Start with impact/implications, not background
+- Use specific data points and comparisons
+- Connect dots between different developments
+- Be authoritative but accessible
+- Eliminate fluff and filler content`
           },
           {
             role: "user", 
@@ -96,13 +119,20 @@ TAG GUIDELINES:
       // Add proper tags based on content analysis
       const enhancedTags = this.enhanceTags(generated.tags || [], generated.content, article);
       
+      // Calculate estimated read time
+      const readTime = this.calculateReadTime(content);
+      
       return {
         title: generated.title || article.title,
         content: content,
         summary: generated.summary || 'A detailed analysis of recent AI developments.',
         tags: enhancedTags,
         sources: [source],
-        diagrams: generated.diagrams || []
+        diagrams: generated.diagrams || [],
+        featuredImage: generated.featuredImage || this.generateFeaturedImageUrl(generated.tags),
+        metaTitle: generated.metaTitle || generated.title,
+        metaDescription: generated.metaDescription || generated.summary,
+        readTime: readTime
       };
 
     } catch (error) {
@@ -135,57 +165,63 @@ TAG GUIDELINES:
   }
 
   private buildSingleArticlePrompt(article: NewsArticle, focusTopic?: string): string {
-    return `Create a comprehensive, detailed blog post from this single AI news article:
+    return `Analyze this AI news article and create a high-quality, insightful blog post:
 
-**Original Article:**
+**Article Details:**
 Source: ${article.source}
 Title: ${article.title}
 URL: ${article.url}
 Published: ${article.publishedAt}
 Content: ${article.content}
-Original Tags: ${article.tags.join(', ')}
+Tags: ${article.tags.join(', ')}
 
-${focusTopic ? `Focus Topic: ${focusTopic}` : 'Analyze this AI/ML development in depth'}
+${focusTopic ? `Special Focus: ${focusTopic}` : ''}
 
-REQUIREMENTS:
-1. Expand on the topic with technical depth and expert analysis
-2. Explain implications for the AI industry and developers
-3. Provide context about why this development matters
-4. Include technical details and concepts for an informed audience
-5. Credit the original source and author properly
-6. Add insights and analysis not present in the original article
-7. Structure with clear headings and logical flow
-8. Only suggest diagrams that would genuinely help explain complex concepts
-9. Use specific, accurate tags related to the technology and companies mentioned
+**Analysis Requirements:**
+Transform this news into strategic intelligence by addressing:
 
-EXAMPLE STRUCTURE:
-# [Specific Title About the Main Topic]
+🎯 **Core Impact**: Start with the main implication - why should readers care?
+📊 **Industry Disruption**: How does this shift competitive dynamics?
+💰 **Economic Implications**: Cost savings, efficiency gains, new revenue models?  
+⚡ **Performance Breakthrough**: Technical improvements and usability advances?
+🔗 **Strategic Connections**: How does this connect to other recent developments?
+📈 **Future Trajectory**: What does this signal for industry direction?
 
-## Introduction
-Brief overview and why this matters
+**Content Guidelines:**
+- 800-1200 words maximum - every word must add value
+- Lead with implications, not background information
+- Use specific data points and concrete examples
+- Connect this development to broader industry trends
+- Be authoritative yet accessible to technical professionals
+- Include SEO-optimized metadata and featured image suggestions
 
-## Key Developments
-Detailed explanation of what happened
+**Structure Template:**
+# [Impact-focused title highlighting the key implication]
 
-## Technical Analysis
-Deep dive into technical implications
+Opening paragraph: Core insight and why it matters NOW
 
-## Industry Impact
-What this means for the field
+## Industry Transformation
+How this changes the competitive landscape and market dynamics
 
-## Implementation Considerations
-Practical aspects for developers/companies
+## Technical Breakthrough  
+Key innovations and performance improvements (keep concise)
 
-## Future Implications
-Where this leads
+## Strategic Implications
+What this means for companies, developers, and the broader ecosystem
 
-## Conclusion
-Key takeaways
+## Competitive Context
+How this positions against other major players and recent developments
 
-[Proper source attribution at the end]
-7. Make the content more valuable than just reading the original articles
+## Implementation Reality
+Practical considerations for adoption and real-world deployment
 
-The post should be 1000-1500 words and demonstrate deep understanding of the AI/ML field.`;
+## Future Outlook
+Where this leads and what to watch for next
+
+---
+*Source: [Original Article Title](URL) - ${article.source}*
+
+Make every sentence count. Deliver maximum insight per word.`;
   }
 
   private extractAuthor(content: string): string {
@@ -280,6 +316,35 @@ ${sources.map(source => `- **[${source.title}](${source.url})** - ${source.publi
     });
 
     return Array.from(tags).slice(0, 8); // Limit to 8 tags
+  }
+
+  private calculateReadTime(content: string): number {
+    const wordsPerMinute = 200;
+    const wordCount = content.split(/\s+/).length;
+    return Math.max(1, Math.ceil(wordCount / wordsPerMinute));
+  }
+
+  private generateFeaturedImageUrl(tags: string[]): string {
+    // Generate relevant Unsplash image URL based on content tags
+    const aiImageKeywords = [
+      'artificial-intelligence', 'machine-learning', 'neural-network', 
+      'technology', 'computer-science', 'robotics', 'data-science'
+    ];
+    
+    // Pick a relevant keyword based on tags
+    let keyword = 'artificial-intelligence'; // default
+    
+    if (tags.some(tag => tag.toLowerCase().includes('vision') || tag.toLowerCase().includes('image'))) {
+      keyword = 'computer-vision';
+    } else if (tags.some(tag => tag.toLowerCase().includes('language') || tag.toLowerCase().includes('nlp'))) {
+      keyword = 'natural-language-processing';
+    } else if (tags.some(tag => tag.toLowerCase().includes('robot'))) {
+      keyword = 'robotics';
+    } else if (tags.some(tag => tag.toLowerCase().includes('data'))) {
+      keyword = 'data-science';
+    }
+    
+    return `https://images.unsplash.com/photo-1677442136019-21780ecad995?w=800&auto=format&fit=crop&q=80&${keyword}`;
   }
 
   async createDiagrams(diagramSuggestions: string[]): Promise<string[]> {
