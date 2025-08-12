@@ -175,6 +175,7 @@ function CommentItem({ comment, postId, level = 0 }: { comment: CommentWithRepli
   const timeAgo = formatDistanceToNow(new Date(comment.createdAt), { addSuffix: true });
 
   const getInitials = (name: string) => {
+    if (!name || typeof name !== 'string') return 'AN';
     return name
       .split(" ")
       .map((word) => word[0])

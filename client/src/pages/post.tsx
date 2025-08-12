@@ -63,7 +63,7 @@ export default function Post() {
   };
 
   const handleShare = async () => {
-    const url = window.location.href;
+    const url = `${window.location.origin}/post/${post?.slug}`;
     
     if (navigator.share) {
       try {
@@ -72,15 +72,29 @@ export default function Post() {
           text: post?.excerpt || "",
           url,
         });
+        toast({
+          title: "Shared successfully!",
+          description: "Post has been shared.",
+        });
       } catch (err) {
-        // User cancelled sharing
+        // User cancelled sharing - don't show error
+        console.log('Share cancelled by user');
       }
     } else {
-      await navigator.clipboard.writeText(url);
-      toast({
-        title: "Link copied!",
-        description: "Post link has been copied to clipboard.",
-      });
+      try {
+        await navigator.clipboard.writeText(url);
+        toast({
+          title: "Link copied!",
+          description: `Post link copied: ${url}`,
+        });
+      } catch (err) {
+        // Fallback: show the URL to user
+        toast({
+          title: "Share this post",
+          description: `Copy this link: ${url}`,
+          duration: 10000,
+        });
+      }
     }
   };
 
@@ -162,12 +176,10 @@ export default function Post() {
         {/* Back Button */}
         <div className="mb-8">
           <Link href="/">
-            <a>
-              <Button variant="ghost" className="text-gray-600 dark:text-gray-400">
-                <ArrowLeft className="mr-2" size={16} />
-                Back to Blog
-              </Button>
-            </a>
+            <Button variant="ghost" className="text-gray-600 dark:text-gray-400">
+              <ArrowLeft className="mr-2" size={16} />
+              Back to Blog
+            </Button>
           </Link>
         </div>
 
@@ -351,11 +363,9 @@ export default function Post() {
             <div className="flex flex-wrap gap-2">
               {post.tags.map((tag: string) => (
                 <Link key={tag} href={`/?tag=${tag}`}>
-                  <a>
-                    <Badge variant="outline" className="hover:bg-primary hover:text-white transition-colors">
-                      {tag}
-                    </Badge>
-                  </a>
+                  <Badge variant="outline" className="hover:bg-primary hover:text-white transition-colors cursor-pointer">
+                    {tag}
+                  </Badge>
                 </Link>
               ))}
             </div>
@@ -369,7 +379,7 @@ export default function Post() {
             <div className="grid md:grid-cols-3 gap-6">
               {filteredRelatedPosts.map((relatedPost) => (
                 <Link key={relatedPost.id} href={`/post/${relatedPost.slug}`}>
-                  <Card className="hover:shadow-md transition-shadow">
+                  <Card className="hover:shadow-md transition-shadow cursor-pointer">
                     <CardContent className="p-4">
                       <h4 className="font-semibold text-secondary dark:text-white mb-2 hover:text-primary transition-colors line-clamp-2">
                         {relatedPost.title}
