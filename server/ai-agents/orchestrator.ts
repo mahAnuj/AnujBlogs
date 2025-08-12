@@ -3,7 +3,7 @@ import type { NewsAgent, NewsArticle } from './newsAgent';
 import type { ContentAgent, GeneratedContent } from './contentAgent';
 import type { ReviewAgent, ReviewResult } from './reviewAgent';
 import type { EnhanceAgent, EnhancementResult } from './enhanceAgent';
-import type { LatestKnowledgeAgent } from './latestKnowledgeAgent';
+import { LatestKnowledgeAgent } from './latestKnowledgeAgent';
 import type { IStorage } from '../storage';
 
 export interface GenerationConfig {
