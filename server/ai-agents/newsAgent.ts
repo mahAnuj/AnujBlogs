@@ -1,220 +1,125 @@
-import OpenAI from "openai";
-
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
-
-export interface NewsSource {
-  id: string;
-  name: string;
-  url: string;
-  rssUrl?: string;
-  apiUrl?: string;
-  selector?: string; // CSS selector for web scraping
-}
-
 export interface NewsArticle {
   id: string;
   title: string;
-  content: string;
-  url: string;
   source: string;
-  publishedAt: Date;
-  author?: string;
-  summary?: string;
+  publishedAt: string;
+  url: string;
+  content: string;
   relevanceScore: number;
   tags: string[];
 }
 
-// Curated AI news sources
-export const AI_NEWS_SOURCES: NewsSource[] = [
-  {
-    id: "techcrunch-ai",
-    name: "TechCrunch AI",
-    url: "https://techcrunch.com/category/artificial-intelligence/",
-    rssUrl: "https://techcrunch.com/category/artificial-intelligence/feed/",
-    selector: "article"
-  },
-  {
-    id: "arxiv-ai",
-    name: "arXiv AI Papers",
-    url: "https://arxiv.org/list/cs.AI/recent",
-    selector: ".meta"
-  },
-  {
-    id: "openai-blog",
-    name: "OpenAI Blog",
-    url: "https://openai.com/blog/",
-    rssUrl: "https://openai.com/blog/rss.xml",
-    selector: "article"
-  },
-  {
-    id: "anthropic-blog",
-    name: "Anthropic Blog",
-    url: "https://www.anthropic.com/news",
-    selector: "article"
-  },
-  {
-    id: "google-ai-blog",
-    name: "Google AI Blog",
-    url: "https://ai.googleblog.com/",
-    rssUrl: "https://ai.googleblog.com/feeds/posts/default",
-    selector: ".post"
-  }
-];
-
 export class NewsAgent {
-  private openai: OpenAI;
+  private sources = [
+    { name: 'TechCrunch', baseUrl: 'https://techcrunch.com', rssUrl: 'https://techcrunch.com/category/artificial-intelligence/feed/' },
+    { name: 'arXiv', baseUrl: 'https://arxiv.org', searchUrl: 'https://export.arxiv.org/api/query' },
+    { name: 'OpenAI Blog', baseUrl: 'https://openai.com/blog', rssUrl: 'https://openai.com/blog/rss.xml' },
+    { name: 'Anthropic Blog', baseUrl: 'https://www.anthropic.com/news', rssUrl: 'https://www.anthropic.com/news/rss.xml' },
+    { name: 'Google AI Blog', baseUrl: 'https://ai.googleblog.com', rssUrl: 'https://ai.googleblog.com/feeds/posts/default' }
+  ];
 
-  constructor() {
-    this.openai = openai;
-  }
-
-  /**
-   * Fetch latest AI news from multiple sources
-   */
-  async fetchLatestNews(hours: number = 24): Promise<NewsArticle[]> {
-    console.log(`Fetching AI news from last ${hours} hours...`);
-    
-    const articles: NewsArticle[] = [];
-    
-    for (const source of AI_NEWS_SOURCES) {
-      try {
-        console.log(`Fetching from ${source.name}...`);
-        const sourceArticles = await this.fetchFromSource(source, hours);
-        articles.push(...sourceArticles);
-      } catch (error) {
-        console.error(`Error fetching from ${source.name}:`, error);
-        continue;
-      }
-    }
-
-    // Sort by relevance and recency
-    return articles
-      .sort((a, b) => {
-        const recencyScore = (new Date().getTime() - a.publishedAt.getTime()) / (1000 * 60 * 60); // hours ago
-        const aScore = a.relevanceScore - (recencyScore * 0.1);
-        const bScore = b.relevanceScore - (new Date().getTime() - b.publishedAt.getTime()) / (1000 * 60 * 60) * 0.1;
-        return bScore - aScore;
-      })
-      .slice(0, 20); // Top 20 most relevant recent articles
-  }
-
-  /**
-   * Fetch articles from a specific news source
-   */
-  private async fetchFromSource(source: NewsSource, hours: number): Promise<NewsArticle[]> {
-    // For demo purposes, we'll simulate fetching articles
-    // In a real implementation, you would use RSS parsers, web scrapers, or APIs
-    
-    const mockArticles = await this.generateMockArticles(source);
-    
-    // Filter by time window
-    const cutoffDate = new Date(Date.now() - hours * 60 * 60 * 1000);
-    return mockArticles.filter(article => article.publishedAt > cutoffDate);
-  }
-
-  /**
-   * Generate realistic mock articles for demonstration
-   * In production, replace with actual news fetching
-   */
-  private async generateMockArticles(source: NewsSource): Promise<NewsArticle[]> {
-    const topics = [
-      "GPT-5 breakthrough in reasoning capabilities",
-      "New multimodal AI model surpasses human performance",
-      "AI safety regulations proposed by government",
-      "Open source LLM achieves state-of-the-art results",
-      "Computer vision breakthrough in autonomous driving",
-      "AI-powered drug discovery accelerates clinical trials",
-      "Neural network compression techniques reduce model size",
-      "Transformer architecture improvements boost efficiency",
-      "AI ethics framework adopted by tech companies",
-      "Quantum computing meets machine learning"
-    ];
-
-    const articles: NewsArticle[] = [];
-    
-    for (let i = 0; i < Math.min(3, topics.length); i++) {
-      const topic = topics[Math.floor(Math.random() * topics.length)];
-      
-      try {
-        // Generate realistic content using AI
-        const response = await this.openai.chat.completions.create({
-          model: "gpt-4o", // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
-          messages: [
-            {
-              role: "system",
-              content: "You are a tech journalist writing about AI developments. Create a realistic news article with proper journalistic structure."
-            },
-            {
-              role: "user",
-              content: `Write a 400-word news article about: "${topic}". Include specific details, quotes from experts, and technical insights. Format as: TITLE|||CONTENT|||SUMMARY|||TAGS`
-            }
-          ],
-          max_tokens: 800
-        });
-
-        const content = response.choices[0]?.message?.content || "";
-        const [title, articleContent, summary, tags] = content.split("|||");
-
-        if (title && articleContent) {
-          articles.push({
-            id: `${source.id}-${Date.now()}-${i}`,
-            title: title.trim(),
-            content: articleContent.trim(),
-            url: `${source.url}/${title.toLowerCase().replace(/[^a-z0-9]/g, '-')}`,
-            source: source.name,
-            publishedAt: new Date(Date.now() - Math.random() * 24 * 60 * 60 * 1000), // Random time in last 24h
-            author: "AI Tech Reporter",
-            summary: summary?.trim() || "",
-            relevanceScore: Math.random() * 0.3 + 0.7, // 0.7-1.0 relevance
-            tags: tags?.split(",").map(tag => tag.trim()) || ["AI", "Technology"]
-          });
-        }
-      } catch (error) {
-        console.error(`Error generating article for topic "${topic}":`, error);
-      }
-    }
-
-    return articles;
-  }
-
-  /**
-   * Analyze article relevance and extract key information
-   */
-  async analyzeArticle(article: NewsArticle): Promise<NewsArticle> {
+  async fetchLatestNews(hoursBack: number = 24): Promise<NewsArticle[]> {
     try {
-      const response = await this.openai.chat.completions.create({
-        model: "gpt-4o", // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
-        messages: [
-          {
-            role: "system",
-            content: `You are an AI content analyst. Analyze the given article and provide:
-            1. Relevance score (0-1) for AI/tech blog readers
-            2. Key tags (comma-separated)
-            3. Brief summary
-            4. Technical complexity level (1-5)
-            
-            Respond in JSON format: {"relevanceScore": number, "tags": ["tag1", "tag2"], "summary": "text", "complexity": number}`
-          },
-          {
-            role: "user",
-            content: `Title: ${article.title}\n\nContent: ${article.content.substring(0, 1000)}...`
-          }
-        ],
-        response_format: { type: "json_object" },
-        max_tokens: 300
-      });
-
-      const analysis = JSON.parse(response.choices[0]?.message?.content || "{}");
+      console.log(`Fetching AI news from the last ${hoursBack} hours...`);
       
-      return {
-        ...article,
-        relevanceScore: analysis.relevanceScore || article.relevanceScore,
-        tags: analysis.tags || article.tags,
-        summary: analysis.summary || article.summary,
-      };
+      // For development, return sample news articles
+      const sampleArticles: NewsArticle[] = [
+        {
+          id: "news-1",
+          title: "Breakthrough in Large Language Model Efficiency: New Architecture Reduces Training Costs by 70%",
+          source: "TechCrunch",
+          publishedAt: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(), // 2 hours ago
+          url: "https://techcrunch.com/ai-breakthrough-efficiency",
+          content: "Researchers have unveiled a revolutionary architecture for training large language models that significantly reduces computational requirements while maintaining performance...",
+          relevanceScore: 0.95,
+          tags: ["LLM", "Machine Learning", "Efficiency", "Training"]
+        },
+        {
+          id: "news-2", 
+          title: "OpenAI Announces GPT-5: Multimodal Capabilities and Improved Reasoning",
+          source: "OpenAI Blog",
+          publishedAt: new Date(Date.now() - 6 * 60 * 60 * 1000).toISOString(), // 6 hours ago
+          url: "https://openai.com/blog/gpt-5-announcement",
+          content: "OpenAI today announced GPT-5, featuring enhanced multimodal understanding, improved reasoning capabilities, and better alignment with human values...",
+          relevanceScore: 0.98,
+          tags: ["GPT", "OpenAI", "Multimodal", "Reasoning"]
+        },
+        {
+          id: "news-3",
+          title: "Meta's New Vision-Language Model Surpasses Human Performance on Visual Question Answering",
+          source: "arXiv",
+          publishedAt: new Date(Date.now() - 12 * 60 * 60 * 1000).toISOString(), // 12 hours ago
+          url: "https://arxiv.org/abs/2024.vision.language",
+          content: "A new vision-language model from Meta AI has achieved unprecedented performance on visual question answering benchmarks, surpassing human-level accuracy...",
+          relevanceScore: 0.89,
+          tags: ["Vision-Language", "Meta", "Benchmarks", "Computer Vision"]
+        },
+        {
+          id: "news-4",
+          title: "Anthropic's Constitutional AI: New Methods for AI Safety and Alignment",
+          source: "Anthropic Blog", 
+          publishedAt: new Date(Date.now() - 18 * 60 * 60 * 1000).toISOString(), // 18 hours ago
+          url: "https://anthropic.com/constitutional-ai-methods",
+          content: "Anthropic introduces novel constitutional AI techniques that improve AI safety through self-correction and principle-based training methodologies...",
+          relevanceScore: 0.92,
+          tags: ["AI Safety", "Constitutional AI", "Anthropic", "Alignment"]
+        },
+        {
+          id: "news-5",
+          title: "Google's Gemini Ultra Shows Promise in Scientific Research Applications",
+          source: "Google AI Blog",
+          publishedAt: new Date(Date.now() - 20 * 60 * 60 * 1000).toISOString(), // 20 hours ago  
+          url: "https://ai.googleblog.com/gemini-scientific-research",
+          content: "Google's latest Gemini Ultra model demonstrates exceptional performance in scientific research tasks, from protein folding to climate modeling...",
+          relevanceScore: 0.87,
+          tags: ["Gemini", "Google", "Scientific Research", "Applications"]
+        }
+      ];
+
+      // Filter articles within time range
+      const cutoffTime = new Date(Date.now() - hoursBack * 60 * 60 * 1000);
+      const filteredArticles = sampleArticles.filter(article => 
+        new Date(article.publishedAt) > cutoffTime
+      );
+
+      console.log(`Found ${filteredArticles.length} relevant AI news articles`);
+      return filteredArticles;
+
     } catch (error) {
-      console.error("Error analyzing article:", error);
-      return article;
+      console.error('Error fetching news:', error);
+      throw new Error(`Failed to fetch news: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
+  }
+
+  async analyzeRelevance(articles: NewsArticle[], focusTopic?: string): Promise<NewsArticle[]> {
+    try {
+      console.log(`Analyzing relevance${focusTopic ? ` for topic: ${focusTopic}` : ''}...`);
+      
+      // If a focus topic is provided, boost relevance scores for matching articles
+      if (focusTopic) {
+        const focusKeywords = focusTopic.toLowerCase().split(/[\s,]+/);
+        
+        return articles.map(article => {
+          let relevanceBoost = 0;
+          const searchText = `${article.title} ${article.content} ${article.tags.join(' ')}`.toLowerCase();
+          
+          for (const keyword of focusKeywords) {
+            if (searchText.includes(keyword)) {
+              relevanceBoost += 0.1;
+            }
+          }
+          
+          return {
+            ...article,
+            relevanceScore: Math.min(article.relevanceScore + relevanceBoost, 1.0)
+          };
+        });
+      }
+
+      return articles;
+    } catch (error) {
+      console.error('Error analyzing relevance:', error);
+      throw new Error(`Failed to analyze relevance: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   }
 }

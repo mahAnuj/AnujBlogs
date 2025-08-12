@@ -3,8 +3,14 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { insertPostSchema, insertCommentSchema, updatePostSchema } from "@shared/schema";
 import { z } from "zod";
-import { aiOrchestrator } from "./ai-agents/orchestrator";
-import { newsAgent } from "./ai-agents/newsAgent";
+import { AIOrchestrator } from "./ai-agents/orchestrator";
+import { NewsAgent } from "./ai-agents/newsAgent";
+import { ContentAgent } from "./ai-agents/contentAgent";
+
+// Initialize AI agents
+const newsAgent = new NewsAgent();
+const contentAgent = new ContentAgent();
+const aiOrchestrator = new AIOrchestrator(newsAgent, contentAgent, storage);
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Categories

@@ -92,7 +92,8 @@ export default function AIDashboard() {
   // Mutations
   const startGenerationMutation = useMutation({
     mutationFn: async (config: typeof generationConfig) => {
-      return apiRequest("/api/ai/generate", "POST", config);
+      const response = await apiRequest("POST", "/api/ai/generate", config);
+      return response.json();
     },
     onSuccess: (data: any) => {
       toast({
@@ -112,7 +113,8 @@ export default function AIDashboard() {
 
   const cancelJobMutation = useMutation({
     mutationFn: async (jobId: string) => {
-      return apiRequest(`/api/ai/jobs/${jobId}`, "DELETE");
+      const response = await apiRequest("DELETE", `/api/ai/jobs/${jobId}`);
+      return response.json();
     },
     onSuccess: () => {
       toast({
