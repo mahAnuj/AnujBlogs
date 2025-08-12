@@ -356,6 +356,28 @@ Respond with JSON array of issues: [{"type": "factual_error|hallucination", "sev
         }
       }
 
+      // Check for unprofessional meta-headings
+      const unprofessionalHeadings = [
+        'Hook Introduction',
+        'Foundation First', 
+        'Learning Pathways',
+        'Inspiring Conclusion',
+        'Progressive Revelation',
+        'Real-World Context'
+      ];
+      
+      unprofessionalHeadings.forEach(heading => {
+        if (content.content.includes(heading)) {
+          issues.push({
+            type: 'unprofessional_heading',
+            severity: 'high',
+            description: `Found unprofessional meta-heading "${heading}" that reveals content generation process`,
+            location: 'content headings',
+            suggestion: `Replace "${heading}" with a professional, topic-specific heading that adds value to readers`
+          });
+        }
+      });
+
       // Check for potential formatting issues in markdown
       if (content.content.includes('```mermaid') && content.content.includes('flowchart TD')) {
         // This is good - mermaid diagrams should be properly formatted

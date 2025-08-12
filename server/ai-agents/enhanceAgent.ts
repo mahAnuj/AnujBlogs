@@ -123,6 +123,7 @@ Return a JSON object with this exact structure:
 
     // Check if there are storytelling/flow issues
     const storytellingIssues = reviewResult.issues.filter(issue => issue.type === 'storytelling_flow');
+    const headingIssues = reviewResult.issues.filter(issue => issue.type === 'unprofessional_heading');
 
     return `Please enhance this blog post content based ONLY on the specific feedback provided. Do NOT make changes based on your own knowledge.
 
@@ -145,6 +146,13 @@ ${majorIssues.map(issue => `- ${issue.description}${issue.suggestion ? ' | Solut
 
 ${storytellingIssues.length > 0 ? `**STORYTELLING & FLOW ISSUES (Priority Focus):**
 ${storytellingIssues.map(issue => `- ${issue.description}${issue.suggestion ? ' | Solution: ' + issue.suggestion : ''}`).join('\n')}
+` : ''}
+
+${headingIssues.length > 0 ? `**UNPROFESSIONAL HEADING ISSUES (Critical Fix):**
+${headingIssues.map(issue => `- ${issue.description}${issue.suggestion ? ' | Solution: ' + issue.suggestion : ''}`).join('\n')}
+
+IMPORTANT: Replace ALL meta-headings like "Hook Introduction", "Foundation First", "Learning Pathways", "Inspiring Conclusion" with professional, topic-specific headings that add value.
+Examples: "Understanding the Architecture" → "Implementation Strategies" → "Performance Considerations" → "Production Deployment"
 ` : ''}
 
 ${minorIssues.length > 0 ? `**MINOR IMPROVEMENTS:**
