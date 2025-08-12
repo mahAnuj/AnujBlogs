@@ -24,7 +24,10 @@ import {
   Newspaper,
   BarChart3,
   Home,
-  ArrowLeft
+  ArrowLeft,
+  FileText,
+  Edit,
+  Trash2
 } from "lucide-react";
 import { Link } from "wouter";
 
@@ -46,6 +49,8 @@ interface GenerationJob {
     articlesAnalyzed: number;
     blogPostGenerated: boolean;
     postId?: string;
+    postIds?: string[];
+    reviewResults?: Array<{postId: string; approved: boolean; qualityScore: number}>;
   };
 }
 
@@ -90,6 +95,12 @@ export default function AIDashboard() {
   const { data: newsPreview = [], refetch: refetchNews } = useQuery<NewsArticle[]>({
     queryKey: ["/api/ai/news", generationConfig.hoursBack],
     enabled: false, // Only fetch when manually triggered
+  });
+
+  // Query for draft posts that need review
+  const { data: draftPosts = [] } = useQuery<any[]>({
+    queryKey: ["/api/posts/drafts"],
+    refetchInterval: 5000, // Check for new drafts every 5 seconds
   });
 
   // Mutations
@@ -201,8 +212,9 @@ export default function AIDashboard() {
       </div>
 
       <Tabs defaultValue="control" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-4">
+        <TabsList className="grid w-full grid-cols-5">
           <TabsTrigger value="control">Control Panel</TabsTrigger>
+          <TabsTrigger value="drafts">Drafts ({draftPosts.length})</TabsTrigger>
           <TabsTrigger value="jobs">Jobs</TabsTrigger>
           <TabsTrigger value="news">News Preview</TabsTrigger>
           <TabsTrigger value="stats">Statistics</TabsTrigger>
@@ -375,6 +387,180 @@ export default function AIDashboard() {
                       {job.error && (
                         <div className="text-red-600 text-sm bg-red-50 dark:bg-red-900/20 p-2 rounded">
                           {job.error}
+                        </div>
+                      )}
+                    </div>
+                  ))
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Draft Posts for Review */}
+        <TabsContent value="drafts" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <FileText className="h-5 w-5" />
+                Draft Posts Awaiting Review ({draftPosts.length})
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                {draftPosts.length === 0 ? (
+                  <div className="text-center py-8">
+                    <p className="text-gray-500">No draft posts waiting for review.</p>
+                    <p className="text-sm text-gray-400 mt-2">
+                      AI-generated posts will appear here for manual review before publishing.
+                    </p>
+                  </div>
+                ) : (
+                  draftPosts.map((post: any) => (
+                    <div key={post.id} className="p-4 border rounded-lg space-y-3">
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1">
+                          <h4 className="font-medium text-lg line-clamp-2">{post.title}</h4>
+                          <p className="text-sm text-gray-600 dark:text-gray-400 mt-1 line-clamp-2">
+                            {post.excerpt}
+                          </p>
+                          <div className="flex items-center gap-4 text-xs text-gray-500 mt-2">
+                            <span>Created: {new Date(post.createdAt).toLocaleString()}</span>
+                            <span>•</span>
+                            <span>Read time: {post.readTime} min</span>
+                            {post.metadata?.aiGenerated && (
+                              <>
+                                <span>•</span>
+                                <Badge variant="secondary" className="text-xs">
+                                  AI Generated
+                                </Badge>
+                              </>
+                            )}
+                            {post.metadata?.reviewResult && (
+                              <>
+                                <span>•</span>
+                                <Badge 
+                                  variant={post.metadata.reviewResult.approved ? "default" : "destructive"}
+                                  className="text-xs"
+                                >
+                                  Quality: {post.metadata.reviewResult.qualityScore}/100
+                                </Badge>
+                              </>
+                            )}
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2 ml-4">
+                          <Link href={`/post/${post.slug}`}>
+                            <Button variant="outline" size="sm">
+                              <Eye className="h-4 w-4 mr-1" />
+                              Preview
+                            </Button>
+                          </Link>
+                          <Link href={`/create-post?edit=${post.id}`}>
+                            <Button variant="outline" size="sm">
+                              <Edit className="h-4 w-4 mr-1" />
+                              Edit
+                            </Button>
+                          </Link>
+                          <Button 
+                            variant="outline" 
+                            size="sm"
+                            onClick={async () => {
+                              try {
+                                await apiRequest("PUT", `/api/posts/${post.id}`, { status: "published" });
+                                queryClient.invalidateQueries({ queryKey: ["/api/posts/drafts"] });
+                                toast({
+                                  title: "Post Published",
+                                  description: `"${post.title}" has been published.`,
+                                });
+                              } catch (error) {
+                                toast({
+                                  title: "Publish Failed",
+                                  description: "Failed to publish the post.",
+                                  variant: "destructive",
+                                });
+                              }
+                            }}
+                          >
+                            <CheckCircle className="h-4 w-4 mr-1" />
+                            Publish
+                          </Button>
+                          <Button 
+                            variant="outline" 
+                            size="sm"
+                            onClick={async () => {
+                              if (confirm("Are you sure you want to delete this draft?")) {
+                                try {
+                                  await apiRequest("DELETE", `/api/posts/${post.id}`);
+                                  queryClient.invalidateQueries({ queryKey: ["/api/posts/drafts"] });
+                                  toast({
+                                    title: "Draft Deleted",
+                                    description: "The draft post has been deleted.",
+                                  });
+                                } catch (error) {
+                                  toast({
+                                    title: "Delete Failed",
+                                    description: "Failed to delete the draft.",
+                                    variant: "destructive",
+                                  });
+                                }
+                              }
+                            }}
+                          >
+                            <Trash2 className="h-4 w-4 mr-1" />
+                            Delete
+                          </Button>
+                        </div>
+                      </div>
+                      
+                      {/* Show tags */}
+                      {post.tags && post.tags.length > 0 && (
+                        <div className="flex flex-wrap gap-1">
+                          {post.tags.map((tag: string) => (
+                            <Badge key={tag} variant="secondary" className="text-xs">
+                              {tag}
+                            </Badge>
+                          ))}
+                        </div>
+                      )}
+
+                      {/* Show review issues if any */}
+                      {post.metadata?.reviewResult?.issues > 0 && (
+                        <div className="text-sm bg-yellow-50 dark:bg-yellow-900/20 p-2 rounded border-l-4 border-yellow-400">
+                          <div className="flex items-center gap-2">
+                            <AlertCircle className="h-4 w-4 text-yellow-600" />
+                            <span className="font-medium">Review Issues Found:</span>
+                            <span>{post.metadata.reviewResult.issues} total</span>
+                            {post.metadata.reviewResult.criticalIssues > 0 && (
+                              <Badge variant="destructive" className="text-xs">
+                                {post.metadata.reviewResult.criticalIssues} critical
+                              </Badge>
+                            )}
+                          </div>
+                          <p className="text-xs text-yellow-700 dark:text-yellow-300 mt-1">
+                            Please review and edit before publishing.
+                          </p>
+                        </div>
+                      )}
+
+                      {/* Show sources if available */}
+                      {post.metadata?.sources && post.metadata.sources.length > 0 && (
+                        <div className="text-sm">
+                          <span className="font-medium text-gray-600 dark:text-gray-400">Sources:</span>
+                          <div className="mt-1 space-y-1">
+                            {post.metadata.sources.slice(0, 2).map((source: any, index: number) => (
+                              <div key={index} className="text-xs text-blue-600 dark:text-blue-400">
+                                <a href={source.url} target="_blank" rel="noopener noreferrer" className="hover:underline">
+                                  {source.title} - {source.publication}
+                                </a>
+                              </div>
+                            ))}
+                            {post.metadata.sources.length > 2 && (
+                              <div className="text-xs text-gray-500">
+                                +{post.metadata.sources.length - 2} more sources
+                              </div>
+                            )}
+                          </div>
                         </div>
                       )}
                     </div>

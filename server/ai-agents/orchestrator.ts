@@ -1,6 +1,7 @@
 import { randomUUID } from 'crypto';
 import type { NewsAgent, NewsArticle } from './newsAgent';
 import type { ContentAgent, GeneratedContent } from './contentAgent';
+import type { ReviewAgent, ReviewResult } from './reviewAgent';
 import type { IStorage } from '../storage';
 
 export interface GenerationConfig {
@@ -23,6 +24,8 @@ export interface GenerationJob {
     articlesAnalyzed: number;
     blogPostGenerated: boolean;
     postId?: string;
+    postIds?: string[];
+    reviewResults?: Array<{postId: string; approved: boolean; qualityScore: number}>;
   };
 }
 
@@ -38,11 +41,13 @@ class AIOrchestrator {
   private jobs: Map<string, GenerationJob> = new Map();
   private newsAgent: NewsAgent;
   private contentAgent: ContentAgent;
+  private reviewAgent: ReviewAgent;
   private storage: IStorage;
 
-  constructor(newsAgent: NewsAgent, contentAgent: ContentAgent, storage: IStorage) {
+  constructor(newsAgent: NewsAgent, contentAgent: ContentAgent, reviewAgent: ReviewAgent, storage: IStorage) {
     this.newsAgent = newsAgent;
     this.contentAgent = contentAgent;
+    this.reviewAgent = reviewAgent;
     this.storage = storage;
   }
 
@@ -94,25 +99,40 @@ class AIOrchestrator {
         throw new Error('No articles met the relevance criteria');
       }
 
-      // Step 3: Generate content
+      // Step 3: Generate multiple blog posts (one per article)
       this.updateJob(jobId, { status: 'generating', progress: 60 });
-      const generatedContent = await this.contentAgent.generateBlogPost(filteredArticles, job.config.focusTopic);
+      const generatedPosts = await this.contentAgent.generateMultipleBlogPosts(filteredArticles, job.config.focusTopic);
 
-      // Step 4: Create diagrams if suggested
-      this.updateJob(jobId, { status: 'generating', progress: 80 });
-      if (generatedContent.diagrams && generatedContent.diagrams.length > 0) {
-        const diagrams = await this.contentAgent.createDiagrams(generatedContent.diagrams);
-        if (diagrams.length > 0) {
-          // Insert diagrams into the content
-          generatedContent.content = this.insertDiagrams(generatedContent.content, diagrams);
+      // Step 4: Process each post with review agent
+      this.updateJob(jobId, { status: 'reviewing', progress: 80 });
+      const savedPostIds: string[] = [];
+      
+      for (const generatedContent of generatedPosts) {
+        try {
+          // Create diagrams if suggested
+          if (generatedContent.diagrams && generatedContent.diagrams.length > 0) {
+            const diagrams = await this.contentAgent.createDiagrams(generatedContent.diagrams);
+            if (diagrams.length > 0) {
+              // Insert diagrams into the content
+              generatedContent.content = this.insertDiagrams(generatedContent.content, diagrams);
+            }
+          }
+
+          // Review content with AI review agent
+          const reviewResult = await this.reviewAgent.reviewContent(generatedContent);
+          
+          // Save as draft (for manual review) or publish if approved
+          const postId = await this.saveBlogPost(generatedContent, reviewResult);
+          if (postId) {
+            savedPostIds.push(postId);
+          }
+        } catch (error) {
+          console.error('Error processing post:', error);
+          // Continue with other posts
         }
       }
 
-      // Step 5: Save to storage
-      this.updateJob(jobId, { status: 'reviewing', progress: 90 });
-      const postId = await this.saveBlogPost(generatedContent);
-
-      // Step 6: Complete
+      // Step 5: Complete
       this.updateJob(jobId, {
         status: 'completed',
         progress: 100,
@@ -120,8 +140,9 @@ class AIOrchestrator {
         results: {
           articlesFound: articles.length,
           articlesAnalyzed: filteredArticles.length,
-          blogPostGenerated: true,
-          postId
+          blogPostGenerated: savedPostIds.length > 0,
+          postId: savedPostIds[0], // First post ID for backward compatibility
+          postIds: savedPostIds // All post IDs
         }
       });
 
@@ -171,7 +192,7 @@ ${diagram}
     return updatedContent;
   }
 
-  private async saveBlogPost(content: GeneratedContent): Promise<string> {
+  private async saveBlogPost(content: GeneratedContent, reviewResult?: ReviewResult): Promise<string> {
     try {
       // Create a unique slug
       const slug = content.title
@@ -185,21 +206,31 @@ ${diagram}
       const wordCount = content.content.split(/\s+/).length;
       const readTime = Math.max(1, Math.ceil(wordCount / 200));
 
+      // Determine status based on review results
+      const status = reviewResult?.approved ? 'published' : 'draft';
+      
       // Create post data
       const postData = {
         title: content.title,
         slug,
         content: content.content,
         excerpt: content.summary,
-        status: 'published' as const,
+        status,
         featuredImageUrl: null,
         authorId: 'ai-system',
         categoryId: 'cat-1', // Use existing AI/LLM category
         readTime,
+        tags: content.tags,
         metadata: {
           sources: content.sources,
           generatedAt: new Date().toISOString(),
-          aiGenerated: true
+          aiGenerated: true,
+          reviewResult: reviewResult ? {
+            approved: reviewResult.approved,
+            qualityScore: reviewResult.qualityScore,
+            issues: reviewResult.issues.length,
+            criticalIssues: reviewResult.issues.filter(i => i.severity === 'critical').length
+          } : undefined
         }
       };
 
@@ -302,4 +333,5 @@ ${diagram}
 }
 
 // Export the class for instantiation in routes
+export default AIOrchestrator;
 export { AIOrchestrator };

@@ -28,47 +28,53 @@ export class ContentAgent {
     });
   }
 
-  async generateBlogPost(articles: NewsArticle[], focusTopic?: string): Promise<GeneratedContent> {
+  async generateBlogPost(article: NewsArticle, focusTopic?: string): Promise<GeneratedContent> {
     try {
-      console.log(`Generating comprehensive blog post from ${articles.length} articles...`);
+      console.log(`Generating detailed blog post for: ${article.title}`);
 
-      // Create sources array with proper attribution
-      const sources = articles.map(article => ({
+      // Create source attribution
+      const source = {
         title: article.title,
         url: article.url,
         publication: article.source,
         author: this.extractAuthor(article.content)
-      }));
+      };
 
-      // Generate enhanced content with attribution
-      const prompt = this.buildContentPrompt(articles, focusTopic);
+      // Generate enhanced content for single article
+      const prompt = this.buildSingleArticlePrompt(article, focusTopic);
       
       const completion = await this.openai.chat.completions.create({
         model: "gpt-4o", // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
         messages: [
           {
             role: "system",
-            content: `You are an expert AI/ML technical writer for a professional blog. Your task is to create comprehensive, insightful content that goes beyond simple summarization. 
+            content: `You are an expert AI/ML technical writer for a professional blog. Create detailed, insightful blog posts from single news articles.
 
 CRITICAL REQUIREMENTS:
-1. ATTRIBUTION: Always credit original sources and authors throughout the content
-2. ENHANCEMENT: Add value through analysis, context, and insights not present in original articles
-3. TECHNICAL DEPTH: Provide technical explanations suitable for an informed audience
-4. DIAGRAMS: Identify where Mermaid diagrams would enhance understanding
-5. STRUCTURE: Use clear headings, subheadings, and logical flow
+1. SINGLE FOCUS: Create one comprehensive blog post about ONE specific topic/article
+2. DEEP ANALYSIS: Provide technical depth, implications, and expert insights
+3. PROPER ATTRIBUTION: Credit the original source and author
+4. TECHNICAL ACCURACY: Ensure all technical information is correct
+5. STRUCTURED CONTENT: Use clear headings and logical progression
+6. ACTIONABLE DIAGRAMS: Only suggest diagrams that add real value
 
 FORMAT: Respond with JSON containing:
-- title: Engaging, SEO-friendly title
-- content: Full markdown blog post with proper attribution
-- summary: 2-3 sentence summary
-- tags: Relevant tags array
-- diagrams: Array of Mermaid diagram suggestions with descriptions
+- title: Specific, engaging title about the main topic
+- content: Full markdown blog post (1500-2500 words) with proper attribution
+- summary: 2-3 sentence summary focusing on key insights
+- tags: Specific, relevant tags (include company names, technologies, concepts)
+- diagrams: Array of specific Mermaid diagram descriptions (only if truly helpful)
 
-ATTRIBUTION STYLE:
-- "According to [Author] from [Publication]..."
-- "As reported by [Publication]..."
-- "[Publication] notes that..."
-- Always include source links: [original article](URL)`
+DIAGRAM GUIDELINES:
+- Only suggest diagrams that illustrate complex concepts
+- Be specific: "Flowchart showing the GPT-4 training pipeline"
+- Don't suggest generic diagrams like "AI overview"
+
+TAG GUIDELINES:
+- Include specific technologies (GPT-4, Claude, Transformers)
+- Include company names (OpenAI, Anthropic, Google)
+- Include technical concepts (Multimodal, Fine-tuning, RAG)
+- Use proper capitalization`
           },
           {
             role: "user", 
@@ -82,15 +88,15 @@ ATTRIBUTION STYLE:
 
       const generated = JSON.parse(completion.choices[0].message.content || '{}');
 
-      // Add source attribution to the generated content
-      const contentWithSources = this.addSourceAttribution(generated.content, sources);
+      // Add proper tags based on content analysis
+      const enhancedTags = this.enhanceTags(generated.tags || [], generated.content, article);
       
       return {
-        title: generated.title || 'Latest AI Developments',
-        content: contentWithSources,
-        summary: generated.summary || 'A comprehensive overview of recent AI developments.',
-        tags: generated.tags || ['AI', 'Machine Learning'],
-        sources,
+        title: generated.title || article.title,
+        content: generated.content || '',
+        summary: generated.summary || 'A detailed analysis of recent AI developments.',
+        tags: enhancedTags,
+        sources: [source],
         diagrams: generated.diagrams || []
       };
 
@@ -100,29 +106,78 @@ ATTRIBUTION STYLE:
     }
   }
 
-  private buildContentPrompt(articles: NewsArticle[], focusTopic?: string): string {
-    const articlesContent = articles.map(article => `
-**Source: ${article.source}**
-**Title: ${article.title}**
-**URL: ${article.url}**
-**Published: ${article.publishedAt}**
-**Content Preview: ${article.content}**
-**Tags: ${article.tags.join(', ')}**
----`).join('\n');
+  // New method for generating multiple posts
+  async generateMultipleBlogPosts(articles: NewsArticle[], focusTopic?: string): Promise<GeneratedContent[]> {
+    console.log(`Generating ${articles.length} individual blog posts...`);
+    
+    const posts: GeneratedContent[] = [];
+    
+    // Generate posts for each article individually
+    for (const article of articles) {
+      try {
+        const post = await this.generateBlogPost(article, focusTopic);
+        posts.push(post);
+        
+        // Add delay to avoid rate limiting
+        await new Promise(resolve => setTimeout(resolve, 1000));
+      } catch (error) {
+        console.error(`Failed to generate post for article: ${article.title}`, error);
+        // Continue with other articles
+      }
+    }
+    
+    return posts;
+  }
 
-    return `Create a comprehensive blog post analyzing these recent AI developments:
+  private buildSingleArticlePrompt(article: NewsArticle, focusTopic?: string): string {
+    return `Create a comprehensive, detailed blog post from this single AI news article:
 
-${articlesContent}
+**Original Article:**
+Source: ${article.source}
+Title: ${article.title}
+URL: ${article.url}
+Published: ${article.publishedAt}
+Content: ${article.content}
+Original Tags: ${article.tags.join(', ')}
 
-${focusTopic ? `Focus Topic: ${focusTopic}` : 'General AI/ML Focus'}
+${focusTopic ? `Focus Topic: ${focusTopic}` : 'Analyze this AI/ML development in depth'}
 
 REQUIREMENTS:
-1. Create an engaging, informative blog post that synthesizes these developments
-2. Add technical insights and analysis beyond what's in the original articles  
-3. Credit all sources properly with author names and publication details
-4. Include relevant technical context and implications
-5. Suggest 1-2 Mermaid diagrams that would help readers understand key concepts
-6. Use proper markdown formatting with headers, lists, and emphasis
+1. Expand on the topic with technical depth and expert analysis
+2. Explain implications for the AI industry and developers
+3. Provide context about why this development matters
+4. Include technical details and concepts for an informed audience
+5. Credit the original source and author properly
+6. Add insights and analysis not present in the original article
+7. Structure with clear headings and logical flow
+8. Only suggest diagrams that would genuinely help explain complex concepts
+9. Use specific, accurate tags related to the technology and companies mentioned
+
+EXAMPLE STRUCTURE:
+# [Specific Title About the Main Topic]
+
+## Introduction
+Brief overview and why this matters
+
+## Key Developments
+Detailed explanation of what happened
+
+## Technical Analysis
+Deep dive into technical implications
+
+## Industry Impact
+What this means for the field
+
+## Implementation Considerations
+Practical aspects for developers/companies
+
+## Future Implications
+Where this leads
+
+## Conclusion
+Key takeaways
+
+[Proper source attribution at the end]
 7. Make the content more valuable than just reading the original articles
 
 The post should be 1000-1500 words and demonstrate deep understanding of the AI/ML field.`;
@@ -161,6 +216,65 @@ ${sources.map(source => `- **[${source.title}](${source.url})** - ${source.publi
 *This post was generated by AI to provide enhanced analysis and context of recent AI developments. All sources are properly attributed and linked above.*`;
 
     return attributedContent + sourcesSection;
+  }
+
+  private enhanceTags(originalTags: string[], content: string, article: NewsArticle): string[] {
+    const tags = new Set(originalTags);
+    const contentLower = content.toLowerCase();
+    const titleLower = article.title.toLowerCase();
+    
+    // Add company-specific tags
+    const companyTags = {
+      'openai': 'OpenAI',
+      'anthropic': 'Anthropic', 
+      'google': 'Google',
+      'microsoft': 'Microsoft',
+      'meta': 'Meta',
+      'nvidia': 'NVIDIA'
+    };
+
+    // Add model-specific tags
+    const modelTags = {
+      'gpt-4': 'GPT-4',
+      'gpt-5': 'GPT-5', 
+      'claude': 'Claude',
+      'gemini': 'Gemini',
+      'llama': 'LLaMA',
+      'chatgpt': 'ChatGPT'
+    };
+
+    // Add technical concept tags
+    const conceptTags = {
+      'multimodal': 'Multimodal',
+      'transformer': 'Transformers',
+      'fine-tuning': 'Fine-tuning',
+      'rag': 'RAG',
+      'embedding': 'Embeddings',
+      'training': 'Training',
+      'inference': 'Inference',
+      'api': 'API'
+    };
+
+    // Check content and title for relevant tags
+    [...Object.entries(companyTags), ...Object.entries(modelTags), ...Object.entries(conceptTags)]
+      .forEach(([keyword, tag]) => {
+        if (contentLower.includes(keyword) || titleLower.includes(keyword)) {
+          tags.add(tag);
+        }
+      });
+
+    // Always include AI and Machine Learning as base tags
+    tags.add('AI');
+    tags.add('Machine Learning');
+
+    // Add original article tags if relevant
+    article.tags.forEach(tag => {
+      if (tag.toLowerCase() !== 'artificial intelligence' && tag.toLowerCase() !== 'ai') {
+        tags.add(tag);
+      }
+    });
+
+    return Array.from(tags).slice(0, 8); // Limit to 8 tags
   }
 
   async createDiagrams(diagramSuggestions: string[]): Promise<string[]> {

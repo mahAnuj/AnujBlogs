@@ -6,11 +6,13 @@ import { z } from "zod";
 import { AIOrchestrator } from "./ai-agents/orchestrator";
 import { NewsAgent } from "./ai-agents/newsAgent";
 import { ContentAgent } from "./ai-agents/contentAgent";
+import { ReviewAgent } from "./ai-agents/reviewAgent";
 
 // Initialize AI agents
 const newsAgent = new NewsAgent();
 const contentAgent = new ContentAgent();
-const aiOrchestrator = new AIOrchestrator(newsAgent, contentAgent, storage);
+const reviewAgent = new ReviewAgent();
+const aiOrchestrator = new AIOrchestrator(newsAgent, contentAgent, reviewAgent, storage);
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Categories
@@ -52,31 +54,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Check Notion setup status
-  app.get("/api/notion/status", async (req, res) => {
+  // Draft posts endpoint (for manual review)
+  app.get("/api/posts/drafts", async (req, res) => {
     try {
-      if (!process.env.NOTION_INTEGRATION_SECRET || !process.env.NOTION_PAGE_URL) {
-        return res.json({ configured: false, message: "Missing Notion credentials" });
-      }
-
-      // Try to access the Notion page
-      const { findDatabaseByTitle } = await import("./notion");
-      const blogDb = await findDatabaseByTitle("Blog Posts");
-      
-      if (!blogDb) {
-        return res.json({ 
-          configured: false, 
-          message: "Blog Posts database not found. Please create it or run setup." 
-        });
-      }
-
-      res.json({ configured: true, message: "Notion is properly configured" });
+      const drafts = await storage.getPosts({ status: "draft" });
+      res.json(drafts);
     } catch (error) {
-      console.error("Notion status check failed:", error);
-      res.json({ 
-        configured: false, 
-        message: "Cannot access Notion page. Check permissions and page sharing." 
-      });
+      console.error("Error fetching draft posts:", error);
+      res.status(500).json({ error: "Internal server error" });
     }
   });
 
