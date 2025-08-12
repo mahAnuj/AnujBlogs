@@ -125,13 +125,11 @@ class AIOrchestrator {
       this.updateJob(jobId, { status: 'generating', progress: 30 });
       const generatedContent = await this.contentAgent.generateCustomBlogPost(topic, userPrompt);
 
-      // Step 2: Create diagrams if suggested
+      // Step 2: Create code samples if suggested
       this.updateJob(jobId, { status: 'generating', progress: 60 });
-      if (generatedContent.diagrams && generatedContent.diagrams.length > 0) {
-        const diagrams = await this.contentAgent.createDiagrams(generatedContent.diagrams);
-        if (diagrams.length > 0) {
-          generatedContent.content = this.insertDiagrams(generatedContent.content, diagrams);
-        }
+      if (generatedContent.codeSamples && generatedContent.codeSamples.length > 0) {
+        // Code samples are already embedded in the content by the LLM
+        console.log(`Generated ${generatedContent.codeSamples.length} code samples for the article`);
       }
 
       // Step 3: Review content with AI review agent
@@ -207,13 +205,9 @@ class AIOrchestrator {
       
       for (const generatedContent of generatedPosts) {
         try {
-          // Create diagrams if suggested
-          if (generatedContent.diagrams && generatedContent.diagrams.length > 0) {
-            const diagrams = await this.contentAgent.createDiagrams(generatedContent.diagrams);
-            if (diagrams.length > 0) {
-              // Insert diagrams into the content
-              generatedContent.content = this.insertDiagrams(generatedContent.content, diagrams);
-            }
+          // Code samples are already embedded in the content by the LLM
+          if (generatedContent.codeSamples && generatedContent.codeSamples.length > 0) {
+            console.log(`Content includes ${generatedContent.codeSamples.length} code samples`);
           }
 
           // Review content with AI review agent
@@ -264,39 +258,7 @@ class AIOrchestrator {
     }
   }
 
-  private insertDiagrams(content: string, diagrams: string[]): string {
-    let updatedContent = content;
-    
-    // Insert diagrams at strategic points in the content
-    diagrams.forEach((diagram, index) => {
-      const diagramMd = `
-
-\`\`\`mermaid
-${diagram}
-\`\`\`
-
-`;
-      
-      // Insert after the first few paragraphs or before conclusion
-      if (index === 0) {
-        // Insert after the first heading or paragraph
-        const insertPoint = updatedContent.indexOf('\n\n');
-        if (insertPoint > 0) {
-          updatedContent = updatedContent.slice(0, insertPoint) + diagramMd + updatedContent.slice(insertPoint);
-        }
-      } else {
-        // Insert before conclusion or at end
-        const conclusionIndex = updatedContent.toLowerCase().indexOf('## conclusion');
-        if (conclusionIndex > 0) {
-          updatedContent = updatedContent.slice(0, conclusionIndex) + diagramMd + updatedContent.slice(conclusionIndex);
-        } else {
-          updatedContent += diagramMd;
-        }
-      }
-    });
-
-    return updatedContent;
-  }
+  // Removed insertDiagrams method - using code samples instead of mermaid diagrams
 
   private async saveBlogPost(content: GeneratedContent, reviewResult?: ReviewResult): Promise<string> {
     try {

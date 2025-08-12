@@ -273,17 +273,7 @@ export default function Post() {
                 const match = /language-(\w+)/.exec(className || "");
                 const language = match ? match[1] : '';
                 
-                // Mermaid diagrams temporarily disabled - display as code blocks
-                if (language === 'mermaid') {
-                  return (
-                    <div className="my-4 p-4 bg-gray-100 dark:bg-gray-800 rounded-lg">
-                      <div className="text-sm text-gray-600 dark:text-gray-400 mb-2">Mermaid Diagram:</div>
-                      <pre className="text-sm overflow-x-auto">
-                        <code>{String(children).replace(/\n$/, "")}</code>
-                      </pre>
-                    </div>
-                  );
-                }
+                // Mermaid diagrams removed - using practical code samples instead
                 
                 return !inline && match ? (
                   <SyntaxHighlighter

@@ -12,7 +12,12 @@ export interface GeneratedContent {
     author?: string;
     publication: string;
   }>;
-  diagrams?: string[];
+  codeSamples?: Array<{
+    language: string;
+    title: string;
+    code: string;
+    description?: string;
+  }>;
   featuredImage?: string;
   metaTitle?: string;
   metaDescription?: string;
@@ -114,10 +119,9 @@ WRITING STYLE:
 
       const generated = JSON.parse(completion.choices[0].message.content || '{}');
 
-      // Fix double-wrapped Mermaid code blocks that break markdown parsing
+      // Clean up content formatting
       let content = generated.content || '';
-      content = content.replace(/```mermaid\s*```mermaid/g, '```mermaid');
-      content = content.replace(/```\s*```/g, '```');
+      content = content.replace(/```\s*```/g, '```'); // Fix any double-wrapped code blocks
 
       // Add proper tags based on content analysis
       const enhancedTags = this.enhanceTags(generated.tags || [], generated.content, article);
@@ -131,7 +135,7 @@ WRITING STYLE:
         summary: generated.summary || 'A detailed analysis of recent AI developments.',
         tags: enhancedTags,
         sources: [source],
-        diagrams: generated.diagrams || [],
+        codeSamples: generated.codeSamples || [],
         featuredImage: generated.featuredImage || this.generateFeaturedImageUrl(generated.tags),
         metaTitle: generated.metaTitle || generated.title,
         metaDescription: generated.metaDescription || generated.summary,
@@ -350,22 +354,31 @@ ${sources.map(source => `- **[${source.title}](${source.url})** - ${source.publi
     return `https://images.unsplash.com/photo-1677442136019-21780ecad995?w=800&auto=format&fit=crop&q=80&${keyword}`;
   }
 
-  async createDiagrams(diagramSuggestions: string[]): Promise<string[]> {
+  async createCodeSamples(codeSuggestions: Array<{language: string; title: string; description: string}>): Promise<Array<{language: string; title: string; code: string; description?: string}>> {
     try {
-      const diagrams = [];
+      const codeSamples = [];
       
-      for (const suggestion of diagramSuggestions.slice(0, 2)) { // Limit to 2 diagrams
-        const prompt = `Create a Mermaid diagram for: ${suggestion}
+      for (const suggestion of codeSuggestions.slice(0, 3)) { // Limit to 3 code samples
+        const prompt = `Create a practical code example for: ${suggestion.title}
         
-        Make it technically accurate, clear, and educational. Use appropriate Mermaid syntax (flowchart, sequence, etc.).
-        Return only the Mermaid code, no explanations.`;
+        Description: ${suggestion.description}
+        Language: ${suggestion.language}
+        
+        Requirements:
+        - Write production-ready, clean code
+        - Include helpful comments explaining key concepts
+        - Make it educational and practical for developers
+        - Focus on real-world usage patterns
+        - Keep it concise but complete (10-30 lines)
+        
+        Return only the code, no explanations or markdown formatting.`;
 
         const completion = await this.openai.chat.completions.create({
           model: "gpt-4o", // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
           messages: [
             {
               role: "system",
-              content: "You are a technical diagram expert. Create clear, accurate Mermaid diagrams that enhance understanding of AI/ML concepts."
+              content: "You are an expert developer who creates clear, practical code examples that help other developers learn effectively."
             },
             {
               role: "user",
@@ -373,19 +386,24 @@ ${sources.map(source => `- **[${source.title}](${source.url})** - ${source.publi
             }
           ],
           temperature: 0.3,
-          max_tokens: 500
+          max_tokens: 800
         });
 
-        const diagramCode = completion.choices[0].message.content?.trim();
-        if (diagramCode) {
-          diagrams.push(diagramCode);
+        const codeContent = completion.choices[0].message.content?.trim();
+        if (codeContent) {
+          codeSamples.push({
+            language: suggestion.language,
+            title: suggestion.title,
+            code: codeContent,
+            description: suggestion.description
+          });
         }
       }
 
-      return diagrams;
+      return codeSamples;
     } catch (error) {
-      console.error('Error creating diagrams:', error);
-      return []; // Return empty array if diagram generation fails
+      console.error('Error creating code samples:', error);
+      return []; // Return empty array if code generation fails
     }
   }
 
@@ -702,11 +720,12 @@ Target passionate, curious developers who want to stay ahead of the curve. They 
 1. **Hook Introduction** - Start with an intriguing scenario or question that resonates with developers
 2. **Foundation First** - Cover essential basics that fulfill the reader's primary intent (what, how, when, where)
 3. **Progressive Revelation** - Build from fundamentals to advanced concepts with smooth transitions
-4. **Real-World Context** - Show practical examples and current applications
+4. **Real-World Context** - Show practical examples and current applications with code samples
 5. **Historical Perspective** - Brief coverage of origins, key milestones, and popularity growth
-6. **Unique Insights** - Provide correlations and perspectives not found elsewhere
-7. **Learning Pathways** - Clear next steps and resources for continued learning
-8. **Inspiring Conclusion** - End with motivation and practical actions readers can take
+6. **Code Examples** - Include practical, runnable code samples that demonstrate key concepts
+7. **Unique Insights** - Provide correlations and perspectives not found elsewhere
+8. **Learning Pathways** - Clear next steps and resources for continued learning
+9. **Inspiring Conclusion** - End with motivation and practical actions readers can take
 
 **FUNDAMENTAL COVERAGE REQUIREMENTS:**
 - Always address the core intent of the topic first (e.g., "what is X?", "how does X work?")
@@ -732,7 +751,7 @@ Target passionate, curious developers who want to stay ahead of the curve. They 
   "metaDescription": "Unique value proposition (150-160 chars)",
   "featuredImage": "Descriptive image suggestion",
   "sources": [{"title": "Source Title", "url": "https://...", "publication": "Publisher"}],
-  "diagrams": ["Diagram descriptions that add unique visual value"],
+  "codeSamples": [{"language": "javascript", "title": "Example Implementation", "description": "Brief description", "code": "// actual code"}],
   "internalLinks": ["Suggested internal links to our related content"],
   "externalReferences": ["Key external resources for deeper learning"]
 }
@@ -818,7 +837,7 @@ CRITICAL REQUIREMENTS:
         summary: parsedContent.summary || '',
         tags: Array.isArray(parsedContent.tags) ? parsedContent.tags : [topic],
         sources: [], // No external sources for custom generation
-        diagrams: Array.isArray(parsedContent.diagrams) ? parsedContent.diagrams : [],
+        codeSamples: Array.isArray(parsedContent.codeSamples) ? parsedContent.codeSamples : [],
         featuredImage: parsedContent.featuredImage || undefined,
         metaTitle: parsedContent.metaTitle || parsedContent.title,
         metaDescription: parsedContent.metaDescription || parsedContent.summary
