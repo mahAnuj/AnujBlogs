@@ -1720,155 +1720,7 @@ This article synthesizes information from the following sources:
   }
 }
 
-// Notion-based storage implementation
-export class NotionStorage extends MemStorage implements IStorage {
-  private blogDatabaseId: string | null = null;
 
-  private async ensureBlogDatabase() {
-    if (!this.blogDatabaseId) {
-      try {
-        const blogDb = await findDatabaseByTitle("Blog Posts");
-        if (!blogDb) {
-          console.warn("Blog Posts database not found. Please check Notion setup.");
-          return null;
-        }
-        this.blogDatabaseId = blogDb.id;
-      } catch (error) {
-        console.error("Failed to connect to Notion:", error);
-        return null;
-      }
-    }
-    return this.blogDatabaseId;
-  }
-
-  async getPosts(filters?: { category?: string; tag?: string; search?: string; status?: string }): Promise<PostWithDetails[]> {
-    try {
-      const databaseId = await this.ensureBlogDatabase();
-      if (!databaseId) {
-        console.log("Notion not configured, falling back to demo posts");
-        return super.getPosts(filters);
-      }
-      const notionPosts = await getBlogPosts(databaseId);
-      
-      // Convert Notion posts to our PostWithDetails format
-      const posts: PostWithDetails[] = [];
-      
-      for (const notionPost of notionPosts) {
-        // Get page content from Notion
-        const pageBlocks = await getPageContent(notionPost.notionPageId);
-        const content = convertBlocksToMarkdown(pageBlocks);
-        
-        // Create PostWithDetails object
-        const post: PostWithDetails = {
-          id: notionPost.id,
-          title: notionPost.title,
-          slug: notionPost.slug || this.generateSlug(notionPost.title),
-          content: content,
-          excerpt: notionPost.excerpt,
-          featuredImage: null,
-          status: notionPost.status.toLowerCase() as "draft" | "published" | "archived",
-          publishedAt: notionPost.publishedAt,
-          createdAt: notionPost.createdAt,
-          updatedAt: new Date(),
-          authorId: "author-1", // Default author for now
-          categoryId: "cat-1", // Will map properly below
-          tags: notionPost.tags,
-          metaTitle: notionPost.metaTitle,
-          metaDescription: notionPost.metaDescription,
-          readTime: notionPost.readTime,
-          views: notionPost.views,
-          likes: notionPost.likes,
-          commentsCount: 0,
-          // Relations
-          author: {
-            id: "author-1",
-            email: "anuj@anujmahajan.dev",
-            username: "anuj",
-            name: "Anuj Mahajan",
-            avatar: null,
-            createdAt: new Date(),
-          },
-          category: {
-            id: this.getCategoryIdByName(notionPost.category),
-            name: notionPost.category,
-            slug: notionPost.category.toLowerCase().replace(/[^a-z0-9]/g, "-"),
-            description: `Articles about ${notionPost.category}`,
-            color: "#3B82F6",
-            createdAt: new Date(),
-          }
-        };
-        
-        posts.push(post);
-      }
-      
-      // Apply filters
-      let filteredPosts = posts;
-      
-      if (filters?.status) {
-        filteredPosts = filteredPosts.filter(post => post.status === filters.status);
-      }
-      
-      if (filters?.category) {
-        filteredPosts = filteredPosts.filter(post => 
-          post.category.slug === filters.category || post.category.name.toLowerCase() === filters.category?.toLowerCase()
-        );
-      }
-      
-      if (filters?.tag) {
-        filteredPosts = filteredPosts.filter(post => 
-          post.tags?.some(tag => 
-            typeof tag === 'string' 
-              ? tag.toLowerCase() === filters.tag?.toLowerCase()
-              : false
-          )
-        );
-      }
-      
-      if (filters?.search) {
-        const searchTerm = filters.search.toLowerCase();
-        filteredPosts = filteredPosts.filter(post => 
-          post.title.toLowerCase().includes(searchTerm) ||
-          post.content.toLowerCase().includes(searchTerm) ||
-          post.excerpt.toLowerCase().includes(searchTerm)
-        );
-      }
-      
-      return filteredPosts;
-    } catch (error) {
-      console.error("Error fetching posts from Notion:", error);
-      // Fallback to in-memory storage
-      return super.getPosts(filters);
-    }
-  }
-
-  async getPostBySlug(slug: string): Promise<PostWithDetails | undefined> {
-    const posts = await this.getPosts();
-    return posts.find(post => post.slug === slug);
-  }
-
-  private generateSlug(title: string): string {
-    return title.toLowerCase()
-      .replace(/[^a-z0-9\s-]/g, '')
-      .replace(/\s+/g, '-')
-      .replace(/-+/g, '-')
-      .trim();
-  }
-
-  private getCategoryIdByName(name: string): string {
-    const categoryMap: Record<string, string> = {
-      "AI/LLM": "cat-1",
-      "Backend": "cat-2", 
-      "Frontend": "cat-3",
-      "Hosting": "cat-4",
-      "General": "cat-5"
-    };
-    return categoryMap[name] || "cat-5";
-  }
-
-  private getTagIdByName(name: string): string {
-    return `tag-${name.toLowerCase().replace(/[^a-z0-9]/g, "")}`;
-  }
-}
 
 // Use memory storage for reliable local development
 // Database storage implementation using PostgreSQL
@@ -1982,8 +1834,23 @@ export class DatabaseStorage implements IStorage {
       if (shouldInclude) {
         result.push({
           ...post,
-          author: author || null,
-          category: category || null
+          author: author || { 
+            id: "default-user", 
+            username: "system", 
+            email: "system@blog.dev", 
+            name: "System", 
+            avatar: null, 
+            createdAt: new Date() 
+          },
+          category: category || { 
+            id: "default-cat", 
+            name: "General", 
+            slug: "general", 
+            description: "General posts", 
+            color: "#3B82F6", 
+            createdAt: new Date() 
+          },
+          commentsCount: 0
         });
       }
     }
@@ -2000,8 +1867,23 @@ export class DatabaseStorage implements IStorage {
     
     return {
       ...post,
-      author: author || null,
-      category: category || null
+      author: author || { 
+        id: "default-user", 
+        username: "system", 
+        email: "system@blog.dev", 
+        name: "System", 
+        avatar: null, 
+        createdAt: new Date() 
+      },
+      category: category || { 
+        id: "default-cat", 
+        name: "General", 
+        slug: "general", 
+        description: "General posts", 
+        color: "#3B82F6", 
+        createdAt: new Date() 
+      },
+      commentsCount: 0
     };
   }
 
@@ -2014,8 +1896,23 @@ export class DatabaseStorage implements IStorage {
     
     return {
       ...post,
-      author: author || null,
-      category: category || null
+      author: author || { 
+        id: "default-user", 
+        username: "system", 
+        email: "system@blog.dev", 
+        name: "System", 
+        avatar: null, 
+        createdAt: new Date() 
+      },
+      category: category || { 
+        id: "default-cat", 
+        name: "General", 
+        slug: "general", 
+        description: "General posts", 
+        color: "#3B82F6", 
+        createdAt: new Date() 
+      },
+      commentsCount: 0
     };
   }
 
@@ -2028,8 +1925,7 @@ export class DatabaseStorage implements IStorage {
       publishedAt: insertPost.publishedAt || new Date(),
       featuredImage: insertPost.featuredImage || null,
       metaTitle: insertPost.metaTitle || null,
-      metaDescription: insertPost.metaDescription || null,
-      metadata: insertPost.metadata || null
+      metaDescription: insertPost.metaDescription || null
     }).returning();
     return post;
   }
@@ -2044,7 +1940,7 @@ export class DatabaseStorage implements IStorage {
 
   async deletePost(id: string): Promise<boolean> {
     const result = await db.delete(posts).where(eq(posts.id, id));
-    return result.rowCount > 0;
+    return (result.rowCount || 0) > 0;
   }
 
   async incrementPostViews(id: string): Promise<void> {
@@ -2069,10 +1965,8 @@ export class DatabaseStorage implements IStorage {
     const commentsWithAuthors: CommentWithReplies[] = [];
     
     for (const comment of allComments) {
-      const [author] = await db.select().from(users).where(eq(users.id, comment.authorId));
       commentsWithAuthors.push({
         ...comment,
-        author: author || null,
         replies: []
       });
     }
@@ -2108,9 +2002,7 @@ export class DatabaseStorage implements IStorage {
   async createComment(insertComment: InsertComment): Promise<Comment> {
     const [comment] = await db.insert(comments).values({
       ...insertComment,
-      id: randomUUID(),
-      createdAt: new Date(),
-      updatedAt: new Date()
+      createdAt: new Date()
     }).returning();
     return comment;
   }
@@ -2123,7 +2015,7 @@ export class DatabaseStorage implements IStorage {
 
   async approveComment(id: string): Promise<void> {
     await db.update(comments)
-      .set({ status: 'approved' })
+      .set({ isApproved: true })
       .where(eq(comments.id, id));
   }
 }
