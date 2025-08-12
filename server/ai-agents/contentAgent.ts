@@ -493,7 +493,13 @@ ${sources.map(source => `- **[${source.title}](${source.url})** - ${source.publi
 - Comparative analysis between techniques
 - Implementation considerations and best practices
 - Learning pathways and practical next steps
-- Industry adoption and future trends`;
+- Industry adoption and future trends
+
+**SPECIFIC AI CONTEXT REQUIREMENTS:**
+- **MCP (Model Context Protocol)**: Anthropic's 2024 standard for connecting AI to external tools, data sources, and systems
+- **A2A (Agent-to-Agent Protocol)**: Google's 2024 protocol enabling AI agents to communicate and collaborate across platforms
+- **AI Agents**: Autonomous systems that can perceive, decide, and act to achieve specific goals
+- All concepts MUST be explained specifically in relation to Large Language Models and AI systems`;
     }
     
     if (topicLower.includes('artificial intelligence') || topicLower.includes('ai') && topicLower.includes('beginner')) {
@@ -648,8 +654,15 @@ CRITICAL REQUIREMENTS:
 - Provide step-by-step explanations where applicable
 - Include specific real-world use cases and examples
 - Add comparative analysis between different approaches
-- Aim for 1500-2500 words with substantial depth
-- Address fundamentals first, then unique insights and correlations`;
+- MINIMUM 2000 words with substantial depth (aim for 2500+ words)
+- Address fundamentals first, then unique insights and correlations
+- For unclear terms like MCP or A2A, research their AI context using current web sources
+- Ensure ALL concepts are explained in relation to AI and LLMs specifically
+
+**CURRENT AI TERMINOLOGY (2024-2025):**
+- **MCP (Model Context Protocol)**: Anthropic's open standard for AI integration with external tools and data sources (November 2024)
+- **A2A (Agent-to-Agent Protocol)**: Google's open communication protocol for AI agents to collaborate across platforms (April 2024)
+- Both protocols are revolutionizing AI agent ecosystems and multi-agent systems`;
 
       const completion = await this.openai.chat.completions.create({
         model: "gpt-4o", // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
@@ -664,7 +677,7 @@ CRITICAL REQUIREMENTS:
           }
         ],
         temperature: 0.7,
-        max_tokens: 6000,
+        max_tokens: 8000,
         response_format: { type: "json_object" }
       });
 

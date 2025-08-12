@@ -18,8 +18,10 @@ Target audience: Young developer community - content should create engagement an
 Enhancement approach: EnhanceAgent should work only on ReviewAgent feedback, not its own knowledge.
 Content completeness: Must address core intent first (what is X, how it works, real examples) before unique insights.
 Foundation requirement: Cover essential basics, definitions, subtopics, historical context, and current applications.
-Content depth: Word count should vary between 1500-2500 words with comprehensive coverage.
+Content depth: Minimum 2000 words with substantial depth, aiming for 2500+ words with comprehensive coverage.
 One-shot example: Uses reference blog structure for complex multi-concept topics with step-by-step explanations.
+Web research integration: ContentAgent searches for current AI terminology (MCP, A2A) when generating content about unfamiliar concepts.
+AI context requirement: All concepts must be explained specifically in relation to AI and LLMs, not generic definitions.
 
 ## System Architecture
 
@@ -59,6 +61,7 @@ One-shot example: Uses reference blog structure for complex multi-concept topics
 - **Enhance Agent**: Fixes issues found by review agent focusing on narrative cohesion and developer engagement
 - **Orchestrator**: Manages the complete pipeline: generate → review → enhance → save
 - **Research Integration**: Uses current trends and developments to ensure content relevance and accuracy
+- **Web Search Integration**: Automatically researches unfamiliar AI terminology and protocols (MCP, A2A) for accurate, current definitions
 - **Internal Linking**: Automatically finds and links to related content on the site for better SEO
 - **Source Attribution**: Ensures all generated content properly credits original authors and sources
 - **Value Creation**: Focuses on correlating different aspects and providing actionable insights not found elsewhere
