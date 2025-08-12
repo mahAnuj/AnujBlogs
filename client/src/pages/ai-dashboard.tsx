@@ -86,6 +86,8 @@ export default function AIDashboard() {
     focusTopic: ""
   });
 
+  const [customBlogTopic, setCustomBlogTopic] = useState("");
+
   // Redirect non-admin users to login
   if (!isAdmin) {
     setLocation('/admin');
@@ -138,6 +140,28 @@ export default function AIDashboard() {
       toast({
         title: "Generation Failed", 
         description: error.message || "Failed to start AI generation",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const generateCustomBlogMutation = useMutation({
+    mutationFn: async (topic: string) => {
+      const response = await apiRequest("POST", "/api/ai/generate-custom", { topic });
+      return response.json();
+    },
+    onSuccess: (data: any) => {
+      toast({
+        title: "Blog Generation Started",
+        description: `Started generating blog post about "${customBlogTopic}".`,
+      });
+      setCustomBlogTopic("");
+      refetchJobs();
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Generation Failed", 
+        description: error.message || "Failed to start blog generation",
         variant: "destructive",
       });
     },
@@ -196,6 +220,18 @@ export default function AIDashboard() {
 
   const handlePreviewNews = () => {
     refetchNews();
+  };
+
+  const handleGenerateCustomBlog = () => {
+    if (!customBlogTopic.trim()) {
+      toast({
+        title: "Topic Required",
+        description: "Please enter a topic for the blog post.",
+        variant: "destructive",
+      });
+      return;
+    }
+    generateCustomBlogMutation.mutate(customBlogTopic.trim());
   };
 
   const getStatusColor = (status: string) => {
@@ -399,6 +435,48 @@ export default function AIDashboard() {
                   />
                 </div>
               </div>
+            </CardContent>
+          </Card>
+
+          {/* Custom Blog Generation */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <FileText className="h-5 w-5" />
+                Generate Blog on Custom Topic
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex gap-4">
+                <div className="flex-1">
+                  <Label htmlFor="customTopic">Blog Topic</Label>
+                  <Input
+                    id="customTopic"
+                    placeholder="e.g., The Future of AI in Healthcare, How to Build React Apps, etc."
+                    value={customBlogTopic}
+                    onChange={(e) => setCustomBlogTopic(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' && !e.shiftKey) {
+                        e.preventDefault();
+                        handleGenerateCustomBlog();
+                      }
+                    }}
+                  />
+                </div>
+                <div className="flex items-end">
+                  <Button 
+                    onClick={handleGenerateCustomBlog}
+                    disabled={generateCustomBlogMutation.isPending || !customBlogTopic.trim() || runningJobs.length > 0}
+                    className="flex items-center gap-2"
+                  >
+                    <Bot className="h-4 w-4" />
+                    Generate Blog
+                  </Button>
+                </div>
+              </div>
+              <p className="text-sm text-gray-600 dark:text-gray-400">
+                AI will research and generate a comprehensive blog post on the provided topic.
+              </p>
             </CardContent>
           </Card>
 

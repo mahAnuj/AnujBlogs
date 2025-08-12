@@ -385,6 +385,108 @@ ${sources.map(source => `- **[${source.title}](${source.url})** - ${source.publi
       return []; // Return empty array if diagram generation fails
     }
   }
+
+  async generateCustomBlogPost(topic: string): Promise<GeneratedContent> {
+    try {
+      console.log(`Generating custom blog post for topic: ${topic}`);
+
+      const prompt = `You are an expert technical writer and industry analyst creating a comprehensive blog post about: "${topic}"
+
+**Task**: Write an informative, well-researched blog post that provides value to readers interested in this topic.
+
+**Content Requirements:**
+- 1000-1500 words
+- Professional, engaging tone
+- Well-structured with clear headings
+- Include practical insights and actionable information
+- Draw from your knowledge to provide accurate, up-to-date information
+- Include relevant examples where applicable
+
+**Structure:**
+1. Compelling introduction that hooks the reader
+2. Main content organized with clear subheadings
+3. Practical implications or applications
+4. Current trends and future outlook (if applicable)
+5. Conclusion that ties everything together
+
+**SEO Requirements:**
+- Create an engaging title (50-60 characters)
+- Write a compelling meta description (150-160 characters)
+- Suggest 4-6 relevant tags
+- Include suggested featured image description
+
+**Output Format:**
+Provide the response as a JSON object with these fields:
+{
+  "title": "Blog post title",
+  "content": "Full markdown content of the blog post",
+  "summary": "Brief summary/excerpt (2-3 sentences)",
+  "tags": ["tag1", "tag2", "tag3", "tag4"],
+  "metaTitle": "SEO optimized title",
+  "metaDescription": "SEO meta description",
+  "featuredImage": "Description of suggested featured image",
+  "sources": [],
+  "diagrams": ["Description of suggested diagram if applicable"]
+}
+
+Write about: ${topic}`;
+
+      const completion = await this.openai.chat.completions.create({
+        model: "gpt-4o",
+        messages: [
+          {
+            role: "system", 
+            content: "You are an expert technical writer. Always respond with valid JSON only."
+          },
+          {
+            role: "user",
+            content: prompt
+          }
+        ],
+        temperature: 0.7,
+        max_tokens: 4000
+      });
+
+      const responseContent = completion.choices[0]?.message?.content;
+      if (!responseContent) {
+        throw new Error('No response from OpenAI');
+      }
+
+      // Parse the JSON response
+      const parsedContent = JSON.parse(responseContent);
+      
+      // Validate the response structure
+      const result: GeneratedContent = {
+        title: parsedContent.title || `Blog Post: ${topic}`,
+        content: parsedContent.content || '',
+        summary: parsedContent.summary || '',
+        tags: Array.isArray(parsedContent.tags) ? parsedContent.tags : [topic],
+        sources: [], // No external sources for custom generation
+        diagrams: Array.isArray(parsedContent.diagrams) ? parsedContent.diagrams : [],
+        featuredImage: parsedContent.featuredImage || undefined,
+        metaTitle: parsedContent.metaTitle || parsedContent.title,
+        metaDescription: parsedContent.metaDescription || parsedContent.summary
+      };
+
+      console.log(`Custom blog post generated successfully for: ${topic}`);
+      return result;
+
+    } catch (error) {
+      console.error('Error generating custom blog post:', error);
+      
+      // Fallback: Create a basic blog post structure
+      return {
+        title: `Understanding ${topic}`,
+        content: `# Understanding ${topic}\n\nThis is a comprehensive guide to ${topic}.\n\n## Introduction\n\n${topic} is an important topic that deserves detailed exploration.\n\n## Key Concepts\n\nLet's dive into the fundamental concepts.\n\n## Conclusion\n\nIn conclusion, ${topic} continues to be a significant area of interest.`,
+        summary: `A comprehensive guide to understanding ${topic} and its implications.`,
+        tags: [topic, 'Guide', 'Technology'],
+        sources: [],
+        diagrams: [],
+        metaTitle: `Understanding ${topic} - Complete Guide`,
+        metaDescription: `Learn everything you need to know about ${topic} in this comprehensive guide.`
+      };
+    }
+  }
 }
 
 export const contentAgent = new ContentAgent();

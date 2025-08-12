@@ -63,21 +63,17 @@ export function BlogPostCard({ post, featured = false }: BlogPostCardProps) {
     e.preventDefault();
     const url = `${window.location.origin}/post/${post.slug}`;
     
-    if (navigator.share) {
-      try {
-        await navigator.share({
-          title: post.title,
-          text: post.excerpt,
-          url,
-        });
-      } catch (err) {
-        // User cancelled sharing
-      }
-    } else {
+    try {
       await navigator.clipboard.writeText(url);
       toast({
-        title: "Link copied!",
-        description: "Post link has been copied to clipboard.",
+        title: "Blog link copied",
+        description: "The link has been copied to your clipboard.",
+      });
+    } catch (err) {
+      toast({
+        title: "Error",
+        description: "Failed to copy link. Please try again.",
+        variant: "destructive",
       });
     }
   };

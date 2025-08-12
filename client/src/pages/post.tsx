@@ -65,36 +65,19 @@ export default function Post() {
   const handleShare = async () => {
     const url = `${window.location.origin}/post/${post?.slug}`;
     
-    if (navigator.share) {
-      try {
-        await navigator.share({
-          title: post?.title || "",
-          text: post?.excerpt || "",
-          url,
-        });
-        toast({
-          title: "Shared successfully!",
-          description: "Post has been shared.",
-        });
-      } catch (err) {
-        // User cancelled sharing - don't show error
-        console.log('Share cancelled by user');
-      }
-    } else {
-      try {
-        await navigator.clipboard.writeText(url);
-        toast({
-          title: "Link copied!",
-          description: `Post link copied: ${url}`,
-        });
-      } catch (err) {
-        // Fallback: show the URL to user
-        toast({
-          title: "Share this post",
-          description: `Copy this link: ${url}`,
-          duration: 10000,
-        });
-      }
+    try {
+      await navigator.clipboard.writeText(url);
+      toast({
+        title: "Blog link copied",
+        description: "The link has been copied to your clipboard.",
+      });
+    } catch (err) {
+      // Fallback: show the URL to user
+      toast({
+        title: "Blog link",
+        description: `Copy this link: ${url}`,
+        duration: 10000,
+      });
     }
   };
 

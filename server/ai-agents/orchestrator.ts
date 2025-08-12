@@ -11,6 +11,11 @@ export interface GenerationConfig {
   focusTopic?: string;
 }
 
+export interface CustomGenerationConfig {
+  topic: string;
+  type: 'custom';
+}
+
 export interface GenerationJob {
   id: string;
   status: 'pending' | 'fetching' | 'analyzing' | 'generating' | 'reviewing' | 'completed' | 'failed';
@@ -75,6 +80,86 @@ class AIOrchestrator {
     });
 
     return jobId;
+  }
+
+  async startCustomGeneration(config: CustomGenerationConfig): Promise<string> {
+    const jobId = randomUUID();
+    
+    const job: GenerationJob = {
+      id: jobId,
+      status: 'pending',
+      progress: 0,
+      startedAt: new Date().toISOString(),
+      config: {
+        hoursBack: 0, // Not used for custom generation
+        minRelevanceScore: 0, // Not used for custom generation
+        maxArticles: 1, // Generate one post
+        focusTopic: config.topic
+      }
+    };
+
+    this.jobs.set(jobId, job);
+    
+    // Start the custom generation process asynchronously
+    this.processCustomGeneration(jobId, config.topic).catch(error => {
+      console.error(`Custom generation job ${jobId} failed:`, error);
+      this.updateJob(jobId, {
+        status: 'failed',
+        error: error.message,
+        progress: 0
+      });
+    });
+
+    return jobId;
+  }
+
+  private async processCustomGeneration(jobId: string, topic: string): Promise<void> {
+    console.log(`Starting custom generation job ${jobId} for topic: ${topic}`);
+
+    try {
+      // Step 1: Generate blog post directly on the topic
+      this.updateJob(jobId, { status: 'generating', progress: 30 });
+      const generatedContent = await this.contentAgent.generateCustomBlogPost(topic);
+
+      // Step 2: Create diagrams if suggested
+      this.updateJob(jobId, { status: 'generating', progress: 60 });
+      if (generatedContent.diagrams && generatedContent.diagrams.length > 0) {
+        const diagrams = await this.contentAgent.createDiagrams(generatedContent.diagrams);
+        if (diagrams.length > 0) {
+          generatedContent.content = this.insertDiagrams(generatedContent.content, diagrams);
+        }
+      }
+
+      // Step 3: Review content with AI review agent
+      this.updateJob(jobId, { status: 'reviewing', progress: 80 });
+      const reviewResult = await this.reviewAgent.reviewContent(generatedContent);
+      
+      // Step 4: Save the blog post
+      const postId = await this.saveBlogPost(generatedContent, reviewResult);
+
+      // Step 5: Complete
+      this.updateJob(jobId, {
+        status: 'completed',
+        progress: 100,
+        completedAt: new Date().toISOString(),
+        results: {
+          articlesFound: 0, // No articles for custom generation
+          articlesAnalyzed: 0,
+          blogPostGenerated: true,
+          postId: postId
+        }
+      });
+
+      console.log(`Custom generation job ${jobId} completed successfully`);
+
+    } catch (error) {
+      console.error(`Custom generation job ${jobId} failed:`, error);
+      this.updateJob(jobId, {
+        status: 'failed',
+        error: error instanceof Error ? error.message : 'Unknown error',
+        progress: 0
+      });
+    }
   }
 
   private async processGeneration(jobId: string): Promise<void> {
