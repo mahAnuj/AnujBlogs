@@ -139,6 +139,9 @@ export default function Post() {
     .filter((p) => p.id !== post.id && p.status === "published")
     .slice(0, 3);
 
+  // Remove the first h1 heading from content to avoid duplication with the title
+  const processedContent = post.content.replace(/^#\s+.*\n/, '').trim();
+
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-slate-900 text-secondary dark:text-slate-200 transition-colors duration-300">
       <SEOHead
@@ -181,9 +184,7 @@ export default function Post() {
             </span>
           </div>
           
-          <h1 className="text-4xl lg:text-5xl font-bold text-secondary dark:text-white mb-6 leading-tight">
-            {post.title}
-          </h1>
+
           
           <p className="text-xl text-gray-600 dark:text-gray-300 mb-8 leading-relaxed">
             {post.excerpt}
@@ -332,7 +333,7 @@ export default function Post() {
               ),
             }}
           >
-            {post.content}
+            {processedContent}
           </ReactMarkdown>
         </div>
 
