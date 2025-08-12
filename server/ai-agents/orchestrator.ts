@@ -3,6 +3,7 @@ import type { NewsAgent, NewsArticle } from './newsAgent';
 import type { ContentAgent, GeneratedContent } from './contentAgent';
 import type { ReviewAgent, ReviewResult } from './reviewAgent';
 import type { EnhanceAgent, EnhancementResult } from './enhanceAgent';
+import type { LatestKnowledgeAgent } from './latestKnowledgeAgent';
 import type { IStorage } from '../storage';
 
 export interface GenerationConfig {
@@ -50,13 +51,15 @@ class AIOrchestrator {
   private contentAgent: ContentAgent;
   private reviewAgent: ReviewAgent;
   private enhanceAgent: EnhanceAgent;
+  private knowledgeAgent: LatestKnowledgeAgent;
   private storage: IStorage;
 
-  constructor(newsAgent: NewsAgent, contentAgent: ContentAgent, reviewAgent: ReviewAgent, enhanceAgent: EnhanceAgent, storage: IStorage) {
+  constructor(newsAgent: NewsAgent, contentAgent: ContentAgent, reviewAgent: ReviewAgent, enhanceAgent: EnhanceAgent, knowledgeAgent: LatestKnowledgeAgent, storage: IStorage) {
     this.newsAgent = newsAgent;
     this.contentAgent = contentAgent;
     this.reviewAgent = reviewAgent;
     this.enhanceAgent = enhanceAgent;
+    this.knowledgeAgent = knowledgeAgent;
     this.storage = storage;
   }
 
@@ -118,12 +121,17 @@ class AIOrchestrator {
   }
 
   private async processCustomGeneration(jobId: string, topic: string, userPrompt?: string | null): Promise<void> {
-    console.log(`Starting custom generation job ${jobId} for topic: ${topic}`);
+    console.log(`🔍 Starting custom generation job ${jobId} for topic: ${topic}`);
 
     try {
-      // Step 1: Generate blog post directly on the topic
-      this.updateJob(jobId, { status: 'generating', progress: 30 });
-      const generatedContent = await this.contentAgent.generateCustomBlogPost(topic, userPrompt || undefined);
+      // Step 1: Gather latest knowledge using LatestKnowledgeAgent
+      this.updateJob(jobId, { status: 'fetching', progress: 15 });
+      console.log(`🧠 Gathering latest knowledge for: ${topic}`);
+      const knowledgeContext = await this.knowledgeAgent.gatherLatestKnowledge(topic);
+      
+      // Step 2: Generate blog post with current knowledge context
+      this.updateJob(jobId, { status: 'generating', progress: 40 });
+      const generatedContent = await this.contentAgent.generateCustomBlogPost(topic, userPrompt || undefined, knowledgeContext);
 
       // Step 2: Create code samples if suggested
       this.updateJob(jobId, { status: 'generating', progress: 60 });

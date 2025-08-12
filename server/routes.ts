@@ -8,13 +8,15 @@ import { NewsAgent } from "./ai-agents/newsAgent";
 import { ContentAgent } from "./ai-agents/contentAgent";
 import { ReviewAgent } from "./ai-agents/reviewAgent";
 import { EnhanceAgent } from "./ai-agents/enhanceAgent";
+import { LatestKnowledgeAgent } from "./ai-agents/latestKnowledgeAgent";
 
 // Initialize AI agents
 const newsAgent = new NewsAgent();
 const contentAgent = new ContentAgent(storage);
 const reviewAgent = new ReviewAgent();
 const enhanceAgent = new EnhanceAgent();
-const aiOrchestrator = new AIOrchestrator(newsAgent, contentAgent, reviewAgent, enhanceAgent, storage);
+const knowledgeAgent = new LatestKnowledgeAgent();
+const aiOrchestrator = new AIOrchestrator(newsAgent, contentAgent, reviewAgent, enhanceAgent, knowledgeAgent, storage);
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Categories

@@ -1,5 +1,6 @@
 import OpenAI from 'openai';
 import type { NewsArticle } from './newsAgent';
+import type { KnowledgeContext } from './latestKnowledgeAgent';
 
 export interface GeneratedContent {
   title: string;
@@ -442,6 +443,36 @@ Format as natural search results with authoritative information.`
     }
   }
 
+  private formatKnowledgeContext(context: KnowledgeContext): string {
+    return `**LATEST KNOWLEDGE RESEARCH FOR: ${context.topic.toUpperCase()}**
+
+**Current State & Overview:**
+${context.currentInformation}
+
+**Key Findings:**
+${context.keyFindings.map(finding => `• ${finding}`).join('\n')}
+
+**Recent Developments (2024-2025):**
+${context.recentDevelopments.map(dev => `• ${dev}`).join('\n')}
+
+**Technical Details:**
+${context.technicalDetails}
+
+**Industry Trends & Adoption:**
+${context.industryTrends}
+
+**Practical Applications:**
+${context.practicalApplications}
+
+**Authoritative Sources:**
+${context.authorativeSources.map(source => 
+  `• **${source.title}** (${source.url})
+  ${source.key_points.map(point => `  - ${point}`).join('\n')}`
+).join('\n')}
+
+**Research Quality:** This information is based on comprehensive web search and current industry knowledge as of 2024-2025.`;
+  }
+
   private async researchTopic(topic: string): Promise<string> {
     try {
       console.log(`Researching current trends for: ${topic}`);
@@ -665,15 +696,19 @@ Format as natural search results with authoritative information.`
 - Practical applications and next steps`;
   }
 
-  async generateCustomBlogPost(topic: string, userPrompt?: string): Promise<GeneratedContent> {
+  async generateCustomBlogPost(topic: string, userPrompt?: string, knowledgeContext?: KnowledgeContext): Promise<GeneratedContent> {
     try {
       console.log(`Generating custom blog post for topic: ${topic}`);
 
-      // Step 1: Perform comprehensive web research for latest information
-      const webResearchData = await this.performWebResearch(topic);
+      // Step 1: Use provided knowledge context or perform web research
+      const webResearchData = knowledgeContext ? 
+        this.formatKnowledgeContext(knowledgeContext) : 
+        await this.performWebResearch(topic);
       
-      // Step 2: Research current trends (existing method)
-      const trendsData = await this.researchTopic(topic);
+      // Step 2: Research current trends (existing method) - only if no knowledge context provided
+      const trendsData = knowledgeContext ? 
+        'Latest knowledge context provided.' : 
+        await this.researchTopic(topic);
       
       // Step 2: Get related content from our site for internal linking
       const relatedPosts = await this.findRelatedContent(topic);
@@ -856,7 +891,7 @@ CRITICAL REQUIREMENTS:
         summary: `A comprehensive guide to understanding ${topic} and its implications.`,
         tags: [topic, 'Guide', 'Technology'],
         sources: [],
-        diagrams: [],
+        codeSamples: [],
         metaTitle: `Understanding ${topic} - Complete Guide`,
         metaDescription: `Learn everything you need to know about ${topic} in this comprehensive guide.`
       };
