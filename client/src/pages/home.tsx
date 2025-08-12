@@ -70,8 +70,8 @@ export default function Home() {
   const currentTag = tag ? tags.find((t) => t.slug === tag) : null;
 
   // SEO title and description
-  let pageTitle = "Anuj's Blog - Latest Trends in AI, Backend, Frontend & Hosting";
-  let pageDescription = "Discover the latest trends in AI/LLM, backend technologies, frontend frameworks, and hosting solutions. Technical blog by Anuj Mahajan featuring in-depth tutorials and insights.";
+  let pageTitle = "Anuj's Blog - Latest AI & Machine Learning Insights";
+  let pageDescription = "Discover cutting-edge AI developments, machine learning breakthroughs, and industry insights. Expert analysis of AI/LLM innovations and emerging technologies.";
 
   if (currentTag) {
     pageTitle = `#${currentTag.name} Posts - Anuj's Blog`;

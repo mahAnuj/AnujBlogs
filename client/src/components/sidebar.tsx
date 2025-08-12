@@ -5,29 +5,31 @@ import { Input } from "@/components/ui/input";
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
-import { Eye, Plus, FileText, Bot } from "lucide-react";
+import { useAdmin } from "@/hooks/use-admin";
+import { Eye, Plus, FileText, Bot, Shield } from "lucide-react";
 import type { Tag, PostWithDetails } from "@shared/schema";
 
 export function Sidebar() {
   const { toast } = useToast();
+  const { isAdmin } = useAdmin();
   const [email, setEmail] = useState("");
 
   // Removed categories query as we're using static popular tags
 
-  // Popular tags with AI guaranteed, plus famous frontend/backend tags and trending topics
+  // AI-focused popular tags only
   const popularTags = [
     { id: 1, name: "AI", slug: "ai" },
-    { id: 2, name: "React", slug: "react" }, // Famous frontend tag
-    { id: 3, name: "Node.js", slug: "nodejs" }, // Famous backend tag
-    { id: 4, name: "Trending", slug: "trending" },
-    { id: 5, name: "Machine Learning", slug: "machine-learning" },
-    { id: 6, name: "TypeScript", slug: "typescript" },
-    { id: 7, name: "Python", slug: "python" },
-    { id: 8, name: "LLM", slug: "llm" },
-    { id: 9, name: "DevOps", slug: "devops" },
-    { id: 10, name: "JavaScript", slug: "javascript" },
-    { id: 11, name: "Cloud", slug: "cloud" },
-    { id: 12, name: "API", slug: "api" }
+    { id: 2, name: "Machine Learning", slug: "machine-learning" },
+    { id: 3, name: "LLM", slug: "llm" },
+    { id: 4, name: "GPT", slug: "gpt" },
+    { id: 5, name: "OpenAI", slug: "openai" },
+    { id: 6, name: "Anthropic", slug: "anthropic" },
+    { id: 7, name: "Google AI", slug: "google-ai" },
+    { id: 8, name: "Computer Vision", slug: "computer-vision" },
+    { id: 9, name: "Natural Language Processing", slug: "nlp" },
+    { id: 10, name: "Deep Learning", slug: "deep-learning" },
+    { id: 11, name: "Neural Networks", slug: "neural-networks" },
+    { id: 12, name: "Automation", slug: "automation" }
   ];
 
   // Removed tags query as we're using static popular tags only
@@ -64,24 +66,37 @@ export function Sidebar() {
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
-          <Button asChild className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700">
-            <Link href="/ai-dashboard" className="flex items-center gap-2">
-              <Bot className="h-4 w-4" />
-              AI Dashboard
-            </Link>
-          </Button>
-          <Button asChild className="w-full">
-            <Link href="/create-markdown" className="flex items-center gap-2">
-              <Plus className="h-4 w-4" />
-              New Markdown Post
-            </Link>
-          </Button>
-          <Button asChild variant="outline" className="w-full">
-            <Link href="/create" className="flex items-center gap-2">
-              <FileText className="h-4 w-4" />
-              Old Editor
-            </Link>
-          </Button>
+          {isAdmin ? (
+            <Button asChild className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700">
+              <Link href="/ai-dashboard" className="flex items-center gap-2">
+                <Bot className="h-4 w-4" />
+                AI Dashboard
+              </Link>
+            </Button>
+          ) : (
+            <Button asChild variant="outline" className="w-full">
+              <Link href="/admin" className="flex items-center gap-2">
+                <Shield className="h-4 w-4" />
+                Admin Access
+              </Link>
+            </Button>
+          )}
+          {isAdmin && (
+            <Button asChild className="w-full">
+              <Link href="/create-markdown" className="flex items-center gap-2">
+                <Plus className="h-4 w-4" />
+                New Markdown Post
+              </Link>
+            </Button>
+          )}
+          {isAdmin && (
+            <Button asChild variant="outline" className="w-full">
+              <Link href="/create-post" className="flex items-center gap-2">
+                <FileText className="h-4 w-4" />
+                Create Post
+              </Link>
+            </Button>
+          )}
         </CardContent>
       </Card>
 

@@ -16,11 +16,11 @@ export function HeroBanner() {
         <div className="grid lg:grid-cols-2 gap-12 items-center">
           <div>
             <h2 className="text-4xl lg:text-5xl font-bold mb-6 leading-tight">
-              Stay Ahead with Latest{" "}
-              <span className="text-cyan-200">Tech Trends</span>
+              Master the Future of{" "}
+              <span className="text-cyan-200">Artificial Intelligence</span>
             </h2>
             <p className="text-xl text-blue-100 mb-8 leading-relaxed">
-              Dive deep into AI/LLM innovations, backend architectures, frontend frameworks, and cutting-edge hosting solutions. Written by developers, for developers.
+              Explore breakthrough AI developments, machine learning innovations, and strategic industry insights. Expert analysis from the frontlines of AI evolution.
             </p>
             <div className="flex flex-wrap gap-6 text-sm">
               <div className="flex items-center space-x-2">

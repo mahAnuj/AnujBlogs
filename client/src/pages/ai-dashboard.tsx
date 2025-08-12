@@ -1,5 +1,7 @@
 import { useState, useEffect } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
+import { useLocation } from "wouter";
+import { useAdmin } from "@/hooks/use-admin";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -27,7 +29,8 @@ import {
   ArrowLeft,
   FileText,
   Edit,
-  Trash2
+  Trash2,
+  Shield
 } from "lucide-react";
 import { Link } from "wouter";
 
@@ -74,12 +77,20 @@ interface AIStats {
 
 export default function AIDashboard() {
   const { toast } = useToast();
+  const [, setLocation] = useLocation();
+  const { isAdmin } = useAdmin();
   const [generationConfig, setGenerationConfig] = useState({
     hoursBack: 24,
     minRelevanceScore: 0.7,
     maxArticles: 5,
     focusTopic: ""
   });
+
+  // Redirect non-admin users to login
+  if (!isAdmin) {
+    setLocation('/admin');
+    return null;
+  }
 
   // Queries
   const { data: jobs = [], refetch: refetchJobs } = useQuery<GenerationJob[]>({
