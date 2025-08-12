@@ -432,7 +432,7 @@ Provide the response as a JSON object with these fields:
 Write about: ${topic}`;
 
       const completion = await this.openai.chat.completions.create({
-        model: "gpt-4o",
+        model: "gpt-4o", // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
         messages: [
           {
             role: "system", 
@@ -444,7 +444,8 @@ Write about: ${topic}`;
           }
         ],
         temperature: 0.7,
-        max_tokens: 4000
+        max_tokens: 4000,
+        response_format: { type: "json_object" }
       });
 
       const responseContent = completion.choices[0]?.message?.content;

@@ -2,6 +2,7 @@ import { randomUUID } from 'crypto';
 import type { NewsAgent, NewsArticle } from './newsAgent';
 import type { ContentAgent, GeneratedContent } from './contentAgent';
 import type { ReviewAgent, ReviewResult } from './reviewAgent';
+import type { EnhanceAgent, EnhancementResult } from './enhanceAgent';
 import type { IStorage } from '../storage';
 
 export interface GenerationConfig {
@@ -18,7 +19,7 @@ export interface CustomGenerationConfig {
 
 export interface GenerationJob {
   id: string;
-  status: 'pending' | 'fetching' | 'analyzing' | 'generating' | 'reviewing' | 'completed' | 'failed';
+  status: 'pending' | 'fetching' | 'analyzing' | 'generating' | 'reviewing' | 'enhancing' | 'completed' | 'failed';
   progress: number;
   startedAt: string;
   completedAt?: string;
@@ -47,12 +48,14 @@ class AIOrchestrator {
   private newsAgent: NewsAgent;
   private contentAgent: ContentAgent;
   private reviewAgent: ReviewAgent;
+  private enhanceAgent: EnhanceAgent;
   private storage: IStorage;
 
-  constructor(newsAgent: NewsAgent, contentAgent: ContentAgent, reviewAgent: ReviewAgent, storage: IStorage) {
+  constructor(newsAgent: NewsAgent, contentAgent: ContentAgent, reviewAgent: ReviewAgent, enhanceAgent: EnhanceAgent, storage: IStorage) {
     this.newsAgent = newsAgent;
     this.contentAgent = contentAgent;
     this.reviewAgent = reviewAgent;
+    this.enhanceAgent = enhanceAgent;
     this.storage = storage;
   }
 
@@ -131,13 +134,22 @@ class AIOrchestrator {
       }
 
       // Step 3: Review content with AI review agent
-      this.updateJob(jobId, { status: 'reviewing', progress: 80 });
+      this.updateJob(jobId, { status: 'reviewing', progress: 60 });
       const reviewResult = await this.reviewAgent.reviewContent(generatedContent);
       
-      // Step 4: Save the blog post
-      const postId = await this.saveBlogPost(generatedContent, reviewResult);
+      // Step 4: Enhance content if review found issues
+      let finalContent = generatedContent;
+      if (!reviewResult.approved || reviewResult.qualityScore < 85) {
+        this.updateJob(jobId, { status: 'enhancing', progress: 80 });
+        const enhancement = await this.enhanceAgent.enhanceContent(generatedContent, reviewResult);
+        finalContent = enhancement.enhancedContent;
+        console.log(`Content enhanced. Improvements: ${enhancement.improvementsMade.join(', ')}`);
+      }
+      
+      // Step 5: Save the blog post
+      const postId = await this.saveBlogPost(finalContent, reviewResult);
 
-      // Step 5: Complete
+      // Step 6: Complete
       this.updateJob(jobId, {
         status: 'completed',
         progress: 100,
@@ -206,8 +218,16 @@ class AIOrchestrator {
           // Review content with AI review agent
           const reviewResult = await this.reviewAgent.reviewContent(generatedContent);
           
+          // Enhance content if review found issues
+          let finalContent = generatedContent;
+          if (!reviewResult.approved || reviewResult.qualityScore < 85) {
+            const enhancement = await this.enhanceAgent.enhanceContent(generatedContent, reviewResult);
+            finalContent = enhancement.enhancedContent;
+            console.log(`Content enhanced for article. Improvements: ${enhancement.improvementsMade.join(', ')}`);
+          }
+          
           // Save as draft (for manual review) or publish if approved
-          const postId = await this.saveBlogPost(generatedContent, reviewResult);
+          const postId = await this.saveBlogPost(finalContent, reviewResult);
           if (postId) {
             savedPostIds.push(postId);
           }
