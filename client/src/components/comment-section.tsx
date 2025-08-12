@@ -10,6 +10,8 @@ import { apiRequest } from "@/lib/queryClient";
 import { formatDistanceToNow } from "date-fns";
 import { Heart, MessageCircle, User, Reply } from "lucide-react";
 import { z } from "zod";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 import type { CommentWithReplies } from "@shared/schema";
 
 const commentSchema = z.object({
@@ -215,9 +217,54 @@ function CommentItem({ comment, postId, level = 0 }: { comment: CommentWithRepli
             </span>
           </div>
           
-          <p className="text-gray-700 dark:text-gray-300 mb-3 whitespace-pre-wrap">
-            {comment.content}
-          </p>
+          <div className="text-gray-700 dark:text-gray-300 mb-3 prose prose-sm dark:prose-invert max-w-none">
+            <ReactMarkdown
+              remarkPlugins={[remarkGfm]}
+              components={{
+                h1: ({ children }) => (
+                  <h4 className="text-lg font-semibold mb-2 text-gray-900 dark:text-white">{children}</h4>
+                ),
+                h2: ({ children }) => (
+                  <h5 className="text-base font-semibold mb-2 text-gray-900 dark:text-white">{children}</h5>
+                ),
+                h3: ({ children }) => (
+                  <h6 className="text-sm font-semibold mb-2 text-gray-900 dark:text-white">{children}</h6>
+                ),
+                p: ({ children }) => (
+                  <p className="mb-2 text-gray-700 dark:text-gray-300">{children}</p>
+                ),
+                ul: ({ children }) => (
+                  <ul className="list-disc list-inside mb-2 space-y-1 text-gray-700 dark:text-gray-300">{children}</ul>
+                ),
+                ol: ({ children }) => (
+                  <ol className="list-decimal list-inside mb-2 space-y-1 text-gray-700 dark:text-gray-300">{children}</ol>
+                ),
+                code: ({ children, className }) => (
+                  <code className="bg-gray-100 dark:bg-gray-800 px-1 py-0.5 rounded text-sm">{children}</code>
+                ),
+                pre: ({ children }) => (
+                  <pre className="bg-gray-100 dark:bg-gray-800 p-2 rounded text-sm overflow-x-auto mb-2">{children}</pre>
+                ),
+                blockquote: ({ children }) => (
+                  <blockquote className="border-l-2 border-gray-300 dark:border-gray-600 pl-3 italic text-gray-600 dark:text-gray-400 mb-2">
+                    {children}
+                  </blockquote>
+                ),
+                a: ({ href, children }) => (
+                  <a 
+                    href={href} 
+                    className="text-blue-600 dark:text-blue-400 hover:underline"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    {children}
+                  </a>
+                ),
+              }}
+            >
+              {comment.content}
+            </ReactMarkdown>
+          </div>
           
           <div className="flex items-center space-x-4 text-sm">
             <Button
