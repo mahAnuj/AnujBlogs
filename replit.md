@@ -64,7 +64,7 @@ AI context requirement: All concepts must be explained specifically in relation 
 - **Orchestrator**: Manages the complete pipeline: knowledge gathering → generate → review → enhance → save
 - **Latest Knowledge Integration**: NEW LatestKnowledgeAgent performs 5-6 comprehensive web searches before content generation
 - **Comprehensive Web Research**: Automatically performs 4-5 targeted web searches for ALL topics gathering latest information, trends, and developments
-- **Dynamic Search Strategy**: Generates topic-specific search queries (e.g., "2024 latest developments", "current trends", "best practices", "real world applications")
+- **Dynamic Search Strategy**: Generates topic-specific search queries (e.g., "2025 latest developments", "current trends", "best practices", "real world applications")
 - **Internal Linking**: Automatically finds and links to related content on the site for better SEO
 - **Source Attribution**: Ensures all generated content properly credits original authors and sources
 - **Value Creation**: Focuses on correlating different aspects and providing actionable insights not found elsewhere

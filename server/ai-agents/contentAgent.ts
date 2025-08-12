@@ -452,7 +452,7 @@ ${context.currentInformation}
 **Key Findings:**
 ${context.keyFindings.map(finding => `• ${finding}`).join('\n')}
 
-**Recent Developments (2024-2025):**
+**Recent Developments (2025):**
 ${context.recentDevelopments.map(dev => `• ${dev}`).join('\n')}
 
 **Technical Details:**
@@ -470,7 +470,7 @@ ${context.authorativeSources.map(source =>
   ${source.key_points.map(point => `  - ${point}`).join('\n')}`
 ).join('\n')}
 
-**Research Quality:** This information is based on comprehensive web search and current industry knowledge as of 2024-2025.`;
+**Research Quality:** This information is based on comprehensive web search and current industry knowledge as of 2025.`;
   }
 
   private async researchTopic(topic: string): Promise<string> {
@@ -478,7 +478,7 @@ ${context.authorativeSources.map(source =>
       console.log(`Researching current trends for: ${topic}`);
       
       // Use web search to get current information about the topic
-      const searchQuery = `latest developments trends research ${topic} 2024 2025`;
+      const searchQuery = `latest developments trends research ${topic} 2025`;
       
       // For now, we'll use OpenAI with up-to-date knowledge
       // In the future, this could be enhanced with web_search tool
@@ -487,7 +487,7 @@ ${context.authorativeSources.map(source =>
         messages: [
           {
             role: "system",
-            content: "You are a research assistant with access to current information. Provide the latest trends, developments, and key insights about the given topic. Focus on 2024-2025 developments, industry perspectives, and practical applications."
+            content: "You are a research assistant with access to current information. Provide the latest trends, developments, and key insights about the given topic. Focus on 2025 developments, industry perspectives, and practical applications."
           },
           {
             role: "user", 
@@ -495,7 +495,7 @@ ${context.authorativeSources.map(source =>
             - Latest industry developments and breakthroughs
             - Key companies and research institutions leading in this area
             - Practical applications and real-world implementations
-            - Future predictions and trends for 2024-2025
+            - Future predictions and trends for 2025
             - Expert opinions and market insights
             
             Provide authoritative sources and reference-worthy information.`
@@ -505,7 +505,7 @@ ${context.authorativeSources.map(source =>
         max_tokens: 1000
       });
 
-      return researchCompletion.choices[0]?.message?.content || `Recent developments in ${topic} continue to evolve rapidly with significant advances in 2024...`;
+      return researchCompletion.choices[0]?.message?.content || `Recent developments in ${topic} continue to evolve rapidly with significant advances in 2025...`;
     } catch (error) {
       console.error('Error researching topic:', error);
       return `Recent developments in ${topic} continue to evolve rapidly with significant industry advances...`;
@@ -591,14 +591,14 @@ ${context.authorativeSources.map(source =>
 
   private generateSearchQueries(topic: string): string[] {
     const topicLower = topic.toLowerCase();
-    const queries = [`${topic} 2024 latest developments`];
+    const queries = [`${topic} 2025 latest developments`];
     
     // Add specific queries based on topic content
     if (topicLower.includes('llm') || topicLower.includes('ai')) {
       queries.push(
-        `${topic} current trends 2024`,
-        `${topic} real world applications 2024`,
-        `${topic} best practices 2024`
+        `${topic} current trends 2025`,
+        `${topic} real world applications 2025`,
+        `${topic} best practices 2025`
       );
       
       // Add specific term searches for AI topics
@@ -835,7 +835,7 @@ CRITICAL REQUIREMENTS:
 - For unclear terms like MCP or A2A, research their AI context using current web sources
 - Ensure ALL concepts are explained in relation to AI and LLMs specifically
 
-**CURRENT AI TERMINOLOGY (2024-2025):**
+**CURRENT AI TERMINOLOGY (2025):**
 - **MCP (Model Context Protocol)**: Anthropic's open standard for AI integration with external tools and data sources (November 2024)
 - **A2A (Agent-to-Agent Protocol)**: Google's open communication protocol for AI agents to collaborate across platforms (April 2024)
 - Both protocols are revolutionizing AI agent ecosystems and multi-agent systems`;

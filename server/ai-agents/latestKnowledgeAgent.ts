@@ -135,7 +135,7 @@ export class LatestKnowledgeAgent {
     Please analyze and extract:
     1. Current state and latest developments
     2. Key technical findings and specifications
-    3. Recent developments and trends (2024-2025)
+    3. Recent developments and trends (2025)
     4. Authoritative sources with key points
     5. Technical implementation details
     6. Industry trends and adoption
@@ -228,7 +228,7 @@ export class LatestKnowledgeAgent {
             content: `Search query: ${query}
             
 Please provide detailed, current information about this topic including:
-- Recent developments and news (2024-2025)
+- Recent developments and news (2025)
 - Current state and latest features
 - Key industry players and perspectives  
 - Technical details and implementations
