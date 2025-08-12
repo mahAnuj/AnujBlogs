@@ -103,8 +103,9 @@ export default function AIDashboard() {
     refetchInterval: 10000, // Update stats every 10 seconds
   });
 
-  const { data: newsPreview = [], refetch: refetchNews } = useQuery<NewsArticle[]>({
-    queryKey: ["/api/ai/news", generationConfig.hoursBack],
+  const { data: newsPreview = [], refetch: refetchNews, isLoading: isLoadingNews } = useQuery<NewsArticle[]>({
+    queryKey: ["/api/ai/news"],
+    queryFn: () => fetch(`/api/ai/news?hours=${generationConfig.hoursBack}`).then(res => res.json()),
     enabled: false, // Only fetch when manually triggered
   });
 
@@ -691,17 +692,29 @@ export default function AIDashboard() {
                   <Newspaper className="h-5 w-5" />
                   Latest AI News Preview
                 </div>
-                <Button variant="outline" onClick={handlePreviewNews}>
-                  <RefreshCw className="h-4 w-4 mr-2" />
-                  Refresh
+                <Button 
+                  variant="outline" 
+                  onClick={handlePreviewNews}
+                  disabled={isLoadingNews}
+                >
+                  <RefreshCw className={`h-4 w-4 mr-2 ${isLoadingNews ? 'animate-spin' : ''}`} />
+                  {isLoadingNews ? 'Loading...' : 'Refresh'}
                 </Button>
               </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {newsPreview.length === 0 ? (
+                {isLoadingNews ? (
+                  <div className="text-center py-8">
+                    <RefreshCw className="h-6 w-6 animate-spin mx-auto mb-2" />
+                    <p className="text-gray-500">Fetching latest AI news articles...</p>
+                  </div>
+                ) : newsPreview.length === 0 ? (
                   <div className="text-center py-8">
                     <p className="text-gray-500">Click "Refresh" to preview latest AI news articles</p>
+                    <p className="text-sm text-gray-400 mt-1">
+                      These articles will be analyzed and used for blog post generation
+                    </p>
                   </div>
                 ) : (
                   newsPreview.map((article) => (
