@@ -27,18 +27,39 @@ function MermaidDiagram({ chart }: { chart: string }) {
   const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (ref.current) {
-      mermaid.initialize({
-        startOnLoad: true,
-        theme: 'default',
-        securityLevel: 'loose',
-      });
-      
-      mermaid.render('mermaid-diagram-' + Math.random().toString(36).substr(2, 9), chart, (svgCode) => {
-        if (ref.current) {
-          ref.current.innerHTML = svgCode;
+    if (ref.current && chart) {
+      const renderMermaid = async () => {
+        try {
+          // Initialize mermaid
+          mermaid.initialize({
+            startOnLoad: false,
+            theme: 'default',
+            securityLevel: 'loose',
+            fontFamily: 'inherit',
+          });
+
+          const id = `mermaid-${Math.random().toString(36).substr(2, 9)}`;
+          
+          // Create a temporary element for rendering
+          const tempDiv = document.createElement('div');
+          tempDiv.innerHTML = `<div class="mermaid">${chart}</div>`;
+          
+          // Use the new async render API
+          const { svg } = await mermaid.render(id, chart);
+          
+          if (ref.current) {
+            ref.current.innerHTML = svg;
+          }
+        } catch (error) {
+          console.error('Mermaid rendering error:', error);
+          // Fallback to showing code block
+          if (ref.current) {
+            ref.current.innerHTML = `<pre class="bg-gray-100 dark:bg-gray-800 p-4 rounded-lg overflow-x-auto"><code>${chart}</code></pre>`;
+          }
         }
-      });
+      };
+
+      renderMermaid();
     }
   }, [chart]);
 
