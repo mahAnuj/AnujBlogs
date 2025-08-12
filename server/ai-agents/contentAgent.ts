@@ -21,8 +21,9 @@ export interface GeneratedContent {
 
 export class ContentAgent {
   private openai: OpenAI;
+  private storage: any; // Will be injected
 
-  constructor() {
+  constructor(storage?: any) {
     if (!process.env.OPENAI_API_KEY) {
       throw new Error('OPENAI_API_KEY environment variable is required');
     }
@@ -30,6 +31,8 @@ export class ContentAgent {
     this.openai = new OpenAI({
       apiKey: process.env.OPENAI_API_KEY
     });
+    
+    this.storage = storage;
   }
 
   async generateBlogPost(article: NewsArticle, focusTopic?: string): Promise<GeneratedContent> {
@@ -386,57 +389,159 @@ ${sources.map(source => `- **[${source.title}](${source.url})** - ${source.publi
     }
   }
 
+  private async researchTopic(topic: string): Promise<string> {
+    try {
+      console.log(`Researching current trends for: ${topic}`);
+      
+      // Use web search to get current information about the topic
+      const searchQuery = `latest developments trends research ${topic} 2024 2025`;
+      
+      // For now, we'll use OpenAI with up-to-date knowledge
+      // In the future, this could be enhanced with web_search tool
+      const researchCompletion = await this.openai.chat.completions.create({
+        model: "gpt-4o",
+        messages: [
+          {
+            role: "system",
+            content: "You are a research assistant with access to current information. Provide the latest trends, developments, and key insights about the given topic. Focus on 2024-2025 developments, industry perspectives, and practical applications."
+          },
+          {
+            role: "user", 
+            content: `Research current trends, developments, and key insights about: ${topic}. Include:
+            - Latest industry developments and breakthroughs
+            - Key companies and research institutions leading in this area
+            - Practical applications and real-world implementations
+            - Future predictions and trends for 2024-2025
+            - Expert opinions and market insights
+            
+            Provide authoritative sources and reference-worthy information.`
+          }
+        ],
+        temperature: 0.3,
+        max_tokens: 1000
+      });
+
+      return researchCompletion.choices[0]?.message?.content || `Recent developments in ${topic} continue to evolve rapidly with significant advances in 2024...`;
+    } catch (error) {
+      console.error('Error researching topic:', error);
+      return `Recent developments in ${topic} continue to evolve rapidly with significant industry advances...`;
+    }
+  }
+
+  private async findRelatedContent(topic: string): Promise<Array<{title: string; slug: string; excerpt: string}>> {
+    try {
+      // Search for related posts in our blog using the storage interface
+      // This will help create internal links and show related content
+      
+      // Get all published posts
+      const allPosts = await this.storage.getPosts({ status: 'published' });
+      
+      // Filter posts that might be related to the topic
+      const relatedPosts = allPosts.filter((post: any) => {
+        const topicLower = topic.toLowerCase();
+        const titleLower = post.title.toLowerCase();
+        const excerptLower = post.excerpt?.toLowerCase() || '';
+        const tagsLower = post.tags?.map((tag: string) => tag.toLowerCase()).join(' ') || '';
+        
+        // Check if topic keywords appear in title, excerpt, or tags
+        return titleLower.includes(topicLower) || 
+               excerptLower.includes(topicLower) ||
+               tagsLower.includes(topicLower) ||
+               this.calculateTopicRelevance(topic, post.title + ' ' + (post.excerpt || '')) > 0.3;
+      });
+      
+      // Limit to top 3 most relevant posts
+      return relatedPosts.slice(0, 3).map((post: any) => ({
+        title: post.title,
+        slug: post.slug,
+        excerpt: post.excerpt || ''
+      }));
+      
+    } catch (error) {
+      console.error('Error finding related content:', error);
+      return [];
+    }
+  }
+
+  private calculateTopicRelevance(topic: string, content: string): number {
+    // Simple relevance calculation based on keyword overlap
+    const topicWords = topic.toLowerCase().split(' ').filter(word => word.length > 2);
+    const contentWords = content.toLowerCase().split(' ');
+    
+    let matches = 0;
+    topicWords.forEach(word => {
+      if (contentWords.some(contentWord => contentWord.includes(word) || word.includes(contentWord))) {
+        matches++;
+      }
+    });
+    
+    return matches / topicWords.length;
+  }
+
   async generateCustomBlogPost(topic: string): Promise<GeneratedContent> {
     try {
       console.log(`Generating custom blog post for topic: ${topic}`);
 
-      const prompt = `You are an expert technical writer and industry analyst creating a comprehensive blog post about: "${topic}"
+      // Step 1: Research current information and trends
+      const researchData = await this.researchTopic(topic);
+      
+      // Step 2: Get related content from our site for internal linking
+      const relatedPosts = await this.findRelatedContent(topic);
 
-**Task**: Write an informative, well-researched blog post that provides value to readers interested in this topic.
+      const prompt = `You are an expert technical writer creating a unique, valuable blog post about: "${topic}"
 
-**Content Requirements:**
-- 1000-1500 words
-- Professional, engaging tone
-- Well-structured with clear headings
-- Include practical insights and actionable information
-- Draw from your knowledge to provide accurate, up-to-date information
-- Include relevant examples where applicable
+**Research Context:**
+${researchData}
 
-**Structure:**
-1. Compelling introduction that hooks the reader
-2. Main content organized with clear subheadings
-3. Practical implications or applications
-4. Current trends and future outlook (if applicable)
-5. Conclusion that ties everything together
+**Related Content on Our Site:**
+${relatedPosts.length > 0 ? relatedPosts.map(post => `- [${post.title}](${post.slug}): ${post.excerpt}`).join('\n') : 'No related content found.'}
 
-**SEO Requirements:**
-- Create an engaging title (50-60 characters)
-- Write a compelling meta description (150-160 characters)
-- Suggest 4-6 relevant tags
-- Include suggested featured image description
+**UNIQUENESS REQUIREMENTS:**
+- Correlate different aspects and perspectives not commonly combined elsewhere
+- Provide unique insights by connecting the topic to broader trends and implications
+- Include practical, actionable advice that readers can immediately apply
+- Reference current developments and real-world examples
+- Create value through synthesis of multiple concepts and viewpoints
 
-**Output Format:**
-Provide the response as a JSON object with these fields:
+**CONTENT PHILOSOPHY:**
+- Quality over quantity - every paragraph must add unique value
+- Connect theoretical concepts to practical applications
+- Include expert perspectives and industry insights
+- Provide learning pathways for different skill levels
+- Link to authoritative external sources for deeper learning
+
+**Structure Requirements:**
+1. **Unique Angle Introduction** - Start with a perspective not commonly covered
+2. **Foundational Knowledge** - Build understanding systematically
+3. **Multi-Dimensional Analysis** - Explore different aspects and connections
+4. **Practical Applications** - Real-world use cases and examples
+5. **Expert Insights** - Industry perspectives and best practices
+6. **Learning Resources** - Curated references for further exploration
+7. **Future Implications** - Where this is heading and why it matters
+
+**Output Format (JSON):**
 {
-  "title": "Blog post title",
-  "content": "Full markdown content of the blog post",
-  "summary": "Brief summary/excerpt (2-3 sentences)",
-  "tags": ["tag1", "tag2", "tag3", "tag4"],
+  "title": "Compelling, unique title (50-60 chars)",
+  "content": "Full markdown content with internal links and references",
+  "summary": "Value proposition summary (2-3 sentences)",
+  "tags": ["relevant", "tags", "for", "topic"],
   "metaTitle": "SEO optimized title",
-  "metaDescription": "SEO meta description",
-  "featuredImage": "Description of suggested featured image",
-  "sources": [],
-  "diagrams": ["Description of suggested diagram if applicable"]
+  "metaDescription": "Unique value proposition (150-160 chars)",
+  "featuredImage": "Descriptive image suggestion",
+  "sources": [{"title": "Source Title", "url": "https://...", "publication": "Publisher"}],
+  "diagrams": ["Diagram descriptions that add unique visual value"],
+  "internalLinks": ["Suggested internal links to our related content"],
+  "externalReferences": ["Key external resources for deeper learning"]
 }
 
-Write about: ${topic}`;
+Create a truly unique, valuable blog post about: ${topic}`;
 
       const completion = await this.openai.chat.completions.create({
         model: "gpt-4o", // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
         messages: [
           {
             role: "system", 
-            content: "You are an expert technical writer. Always respond with valid JSON only."
+            content: "You are an expert technical writer who creates unique, valuable content by correlating different aspects and providing actionable insights. Always respond with valid JSON only."
           },
           {
             role: "user",

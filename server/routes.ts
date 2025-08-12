@@ -11,7 +11,7 @@ import { EnhanceAgent } from "./ai-agents/enhanceAgent";
 
 // Initialize AI agents
 const newsAgent = new NewsAgent();
-const contentAgent = new ContentAgent();
+const contentAgent = new ContentAgent(storage);
 const reviewAgent = new ReviewAgent();
 const enhanceAgent = new EnhanceAgent();
 const aiOrchestrator = new AIOrchestrator(newsAgent, contentAgent, reviewAgent, enhanceAgent, storage);

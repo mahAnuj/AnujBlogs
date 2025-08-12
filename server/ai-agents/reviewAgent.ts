@@ -31,7 +31,7 @@ export class ReviewAgent {
 
   async reviewContent(content: GeneratedContent): Promise<ReviewResult> {
     try {
-      console.log('Starting content review process...');
+      console.log('Starting comprehensive content review process...');
 
       // Run multiple review checks in parallel
       const [
@@ -40,14 +40,18 @@ export class ReviewAgent {
         attributionCheck,
         qualityCheck,
         tagCheck,
-        stylingCheck
+        stylingCheck,
+        uniquenessCheck,
+        valueCheck
       ] = await Promise.all([
         this.checkFactualAccuracy(content),
         this.checkDiagramErrors(content),
         this.checkAttributionIntegrity(content),
         this.assessContentQuality(content),
         this.validateTags(content),
-        this.checkStylingIssues(content)
+        this.checkStylingIssues(content),
+        this.assessContentUniqueness(content),
+        this.assessReaderValue(content)
       ]);
 
       const allIssues: ReviewIssue[] = [
@@ -56,7 +60,9 @@ export class ReviewAgent {
         ...attributionCheck,
         ...qualityCheck,
         ...tagCheck,
-        ...stylingCheck
+        ...stylingCheck,
+        ...uniquenessCheck,
+        ...valueCheck
       ];
 
       // Calculate quality score
@@ -375,5 +381,144 @@ Respond with JSON array of issues: [{"type": "factual_error|hallucination", "sev
       .filter(issue => issue.suggestion)
       .map(issue => issue.suggestion!)
       .slice(0, 5); // Limit to top 5 suggestions
+  }
+
+  private async assessContentUniqueness(content: GeneratedContent): Promise<ReviewIssue[]> {
+    try {
+      const prompt = `Evaluate this blog content for uniqueness and originality:
+
+**Title:** ${content.title}
+**Content:** ${content.content}
+
+**Assessment Criteria:**
+1. Does this provide a unique perspective or angle not commonly found elsewhere?
+2. Does it correlate different aspects or synthesize information in novel ways?
+3. Are there original insights that add new value to the topic?
+4. Does it avoid rehashing common knowledge without adding value?
+5. Does it provide practical applications or examples not typically covered?
+
+**Response Format:**
+Provide specific issues with suggestions for improvement. Focus on areas where the content lacks uniqueness or simply restates common knowledge.
+
+Rate the uniqueness on a scale of 1-10 and explain specific areas that need improvement.`;
+
+      const completion = await this.openai.chat.completions.create({
+        model: "gpt-4o",
+        messages: [
+          {
+            role: "system",
+            content: "You are a content uniqueness expert. Identify areas where content lacks originality and provide specific suggestions for creating unique value."
+          },
+          {
+            role: "user",
+            content: prompt
+          }
+        ],
+        temperature: 0.3,
+        max_tokens: 800
+      });
+
+      const response = completion.choices[0]?.message?.content || '';
+      const issues: ReviewIssue[] = [];
+
+      // Parse the response for specific uniqueness issues
+      if (response.toLowerCase().includes('lacks uniqueness') || response.toLowerCase().includes('common knowledge')) {
+        issues.push({
+          type: 'content_quality',
+          severity: 'high',
+          description: 'Content lacks uniqueness - appears to rehash commonly available information',
+          suggestion: 'Add unique insights, correlate different perspectives, or provide novel synthesis of concepts'
+        });
+      }
+
+      if (response.toLowerCase().includes('superficial') || response.toLowerCase().includes('surface level')) {
+        issues.push({
+          type: 'content_quality',
+          severity: 'medium',
+          description: 'Content provides only surface-level treatment of the topic',
+          suggestion: 'Dive deeper into specific aspects and provide expert-level insights'
+        });
+      }
+
+      return issues;
+    } catch (error) {
+      console.error('Error assessing content uniqueness:', error);
+      return [];
+    }
+  }
+
+  private async assessReaderValue(content: GeneratedContent): Promise<ReviewIssue[]> {
+    try {
+      const prompt = `Evaluate this blog content for reader value and practical utility:
+
+**Title:** ${content.title}
+**Content:** ${content.content}
+
+**Assessment Criteria:**
+1. Does this provide actionable insights readers can immediately apply?
+2. Does it solve real problems or answer important questions?
+3. Does it provide clear learning pathways for different skill levels?
+4. Are there practical examples and real-world applications?
+5. Does it connect theory to practice effectively?
+6. Does it provide resources for further learning?
+7. Is the content structured for easy comprehension and implementation?
+
+**Response Format:**
+Identify specific areas where the content fails to provide sufficient value to readers. Focus on practical applicability and actionable insights.
+
+Rate the reader value on a scale of 1-10 and explain what would make it more valuable.`;
+
+      const completion = await this.openai.chat.completions.create({
+        model: "gpt-4o",
+        messages: [
+          {
+            role: "system",
+            content: "You are a content value expert. Assess whether content provides practical, actionable value to readers and suggest improvements."
+          },
+          {
+            role: "user",
+            content: prompt
+          }
+        ],
+        temperature: 0.3,
+        max_tokens: 800
+      });
+
+      const response = completion.choices[0]?.message?.content || '';
+      const issues: ReviewIssue[] = [];
+
+      // Parse the response for value-related issues
+      if (response.toLowerCase().includes('lacks practical') || response.toLowerCase().includes('not actionable')) {
+        issues.push({
+          type: 'content_quality',
+          severity: 'high',
+          description: 'Content lacks practical, actionable insights for readers',
+          suggestion: 'Add specific steps, examples, or implementations that readers can follow'
+        });
+      }
+
+      if (response.toLowerCase().includes('too theoretical') || response.toLowerCase().includes('abstract')) {
+        issues.push({
+          type: 'content_quality',
+          severity: 'medium',
+          description: 'Content is too theoretical without practical application',
+          suggestion: 'Include real-world examples, case studies, or step-by-step implementations'
+        });
+      }
+
+      if (response.toLowerCase().includes('missing resources') || response.toLowerCase().includes('no references')) {
+        issues.push({
+          type: 'attribution_missing',
+          severity: 'medium',
+          description: 'Content lacks references to authoritative sources for deeper learning',
+          suggestion: 'Add links to authoritative sources, documentation, or advanced learning materials'
+        });
+      }
+
+      return issues;
+    } catch (error) {
+      console.error('Error assessing reader value:', error);
+      return [];
+    }
   }
 }
