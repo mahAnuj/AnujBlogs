@@ -3,6 +3,8 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { insertPostSchema, insertCommentSchema, updatePostSchema } from "@shared/schema";
 import { z } from "zod";
+import { aiOrchestrator } from "./ai-agents/orchestrator";
+import { newsAgent } from "./ai-agents/newsAgent";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Categories
@@ -206,6 +208,95 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error searching posts:", error);
       res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
+  // AI Agent Routes
+  
+  // Start AI content generation
+  app.post("/api/ai/generate", async (req, res) => {
+    try {
+      const { hoursBack = 24, minRelevanceScore = 0.7, maxArticles = 5, focusTopic } = req.body;
+      
+      const jobId = await aiOrchestrator.startGeneration({
+        hoursBack,
+        minRelevanceScore,
+        maxArticles,
+        focusTopic
+      });
+      
+      res.json({ jobId, status: "started" });
+    } catch (error) {
+      console.error("Error starting AI generation:", error);
+      res.status(500).json({ error: "Failed to start generation" });
+    }
+  });
+
+  // Get generation job status
+  app.get("/api/ai/jobs/:jobId", async (req, res) => {
+    try {
+      const { jobId } = req.params;
+      const job = aiOrchestrator.getJobStatus(jobId);
+      
+      if (!job) {
+        return res.status(404).json({ error: "Job not found" });
+      }
+      
+      res.json(job);
+    } catch (error) {
+      console.error("Error fetching job status:", error);
+      res.status(500).json({ error: "Failed to fetch job status" });
+    }
+  });
+
+  // Get all jobs (admin dashboard)
+  app.get("/api/ai/jobs", async (req, res) => {
+    try {
+      const jobs = aiOrchestrator.getAllJobs();
+      res.json(jobs);
+    } catch (error) {
+      console.error("Error fetching jobs:", error);
+      res.status(500).json({ error: "Failed to fetch jobs" });
+    }
+  });
+
+  // Cancel a generation job
+  app.delete("/api/ai/jobs/:jobId", async (req, res) => {
+    try {
+      const { jobId } = req.params;
+      const cancelled = aiOrchestrator.cancelJob(jobId);
+      
+      if (!cancelled) {
+        return res.status(404).json({ error: "Job not found or cannot be cancelled" });
+      }
+      
+      res.json({ status: "cancelled" });
+    } catch (error) {
+      console.error("Error cancelling job:", error);
+      res.status(500).json({ error: "Failed to cancel job" });
+    }
+  });
+
+  // Get AI generation statistics
+  app.get("/api/ai/stats", async (req, res) => {
+    try {
+      const stats = aiOrchestrator.getStats();
+      res.json(stats);
+    } catch (error) {
+      console.error("Error fetching AI stats:", error);
+      res.status(500).json({ error: "Failed to fetch statistics" });
+    }
+  });
+
+  // Preview news articles (for manual review)
+  app.get("/api/ai/news", async (req, res) => {
+    try {
+      const { hours = 24 } = req.query;
+      const articles = await newsAgent.fetchLatestNews(Number(hours));
+      res.json(articles);
+    } catch (error) {
+      console.error("Error fetching news preview:", error);
+      res.status(500).json({ error: "Failed to fetch news" });
     }
   });
 

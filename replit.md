@@ -1,8 +1,8 @@
-# Anuj's Blog - A Modern Full-Stack Blog Platform
+# Anuj's Blog - Multi-Agent AI Blog Platform
 
 ## Overview
 
-This is Anuj's Blog - a modern full-stack blog platform focused on technical content covering AI/LLM, backend technologies, frontend frameworks, and hosting solutions. The application features a React frontend with TypeScript, Express.js backend, and Notion CMS integration for easy content management. The blog is designed to complement anujmahajan.dev with professional technical writing and insights.
+This is Anuj's Blog - an advanced multi-agent AI system that automatically fetches the latest AI news and generates comprehensive blog posts. The platform features automated news aggregation from multiple sources, AI-powered content generation with proper attribution, and intelligent diagram creation to enhance reader comprehension. The system includes manual controls for triggering content generation and reviewing AI-generated posts before publication.
 
 ## User Preferences
 
@@ -44,12 +44,20 @@ Popular tags: AI (guaranteed), one famous frontend tag, one backend tag, and tre
 - **Architecture**: Ready for session-based or JWT authentication integration
 - **User Management**: User entity with email, username, and profile information
 
+### Multi-Agent AI System
+- **News Agent**: Automatically fetches AI news from TechCrunch, arXiv, OpenAI Blog, Anthropic, and Google AI Blog
+- **Content Agent**: Generates comprehensive blog posts with proper source attribution and enhanced explanations
+- **Orchestrator**: Manages the complete pipeline from news fetching to content generation
+- **Source Attribution**: Ensures all generated content properly credits original authors and sources
+- **Diagram Generation**: Automatically creates relevant Mermaid diagrams to improve article comprehension
+
 ### Content Management
-- **Rich Text**: Markdown support with syntax highlighting for code blocks
-- **Media Handling**: Google Cloud Storage integration with Uppy for file uploads
+- **AI-Powered Generation**: Automated blog post creation from multiple news sources
+- **Manual Controls**: Admin dashboard for triggering content generation and reviewing drafts
+- **Rich Text**: Markdown support with syntax highlighting and automated diagram insertion
 - **SEO**: Comprehensive SEO meta tags, Open Graph, and Twitter Card support
-- **Content Structure**: Posts with dynamic tags, featured images, and metadata (removed fixed categories)
-- **Notion CMS**: Integrated with Notion for content creation and management
+- **Content Structure**: Posts with dynamic tags, featured images, and metadata
+- **Local Storage**: Reliable in-memory storage for development and testing
 
 ### UI/UX Design Patterns
 - **Component Library**: Comprehensive shadcn/ui components with consistent theming

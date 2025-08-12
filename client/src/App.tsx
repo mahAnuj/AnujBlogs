@@ -8,6 +8,7 @@ import Home from "@/pages/home";
 import Post from "@/pages/post";
 import CreatePost from "@/pages/create-post";
 import CreateMarkdownPost from "@/pages/create-markdown-post";
+import AIDashboard from "@/pages/ai-dashboard";
 import NotionSetup from "@/pages/notion-setup";
 import NotFound from "@/pages/not-found";
 
@@ -18,6 +19,7 @@ function Router() {
       <Route path="/post/:slug" component={Post} />
       <Route path="/create" component={CreatePost} />
       <Route path="/create-markdown" component={CreateMarkdownPost} />
+      <Route path="/ai-dashboard" component={AIDashboard} />
       <Route path="/notion-setup" component={NotionSetup} />
       <Route path="/category/:category" component={Home} />
       <Route component={NotFound} />

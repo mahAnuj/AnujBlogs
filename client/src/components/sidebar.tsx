@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
-import { Eye, Plus, FileText } from "lucide-react";
+import { Eye, Plus, FileText, Bot } from "lucide-react";
 import type { Tag, PostWithDetails } from "@shared/schema";
 
 export function Sidebar() {
@@ -64,6 +64,12 @@ export function Sidebar() {
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
+          <Button asChild className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700">
+            <Link href="/ai-dashboard" className="flex items-center gap-2">
+              <Bot className="h-4 w-4" />
+              AI Dashboard
+            </Link>
+          </Button>
           <Button asChild className="w-full">
             <Link href="/create-markdown" className="flex items-center gap-2">
               <Plus className="h-4 w-4" />

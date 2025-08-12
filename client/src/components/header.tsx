@@ -5,7 +5,7 @@ import { useTheme } from "@/hooks/use-theme";
 import { SearchBar } from "@/components/search-bar";
 // Removed useQuery import as we're using static topics now
 import { useState } from "react";
-import { Menu, X, Sun, Moon, Code, Plus } from "lucide-react";
+import { Menu, X, Sun, Moon, Code, Plus, Bot } from "lucide-react";
 import { cn } from "@/lib/utils";
 // Removed Tag import as we're using static topics now
 
@@ -79,13 +79,21 @@ export function Header() {
               <SearchBar />
             </div>
 
-            {/* New Post Button */}
-            <Button asChild size="sm" className="hidden md:flex">
-              <Link href="/create-markdown" className="flex items-center gap-2">
-                <Plus className="h-4 w-4" />
-                New Post
-              </Link>
-            </Button>
+            {/* Action Buttons */}
+            <div className="flex items-center gap-2">
+              <Button asChild variant="outline" size="sm" className="hidden md:flex">
+                <Link href="/ai-dashboard" className="flex items-center gap-2">
+                  <Bot className="h-4 w-4" />
+                  AI Dashboard
+                </Link>
+              </Button>
+              <Button asChild size="sm" className="hidden md:flex">
+                <Link href="/create-markdown" className="flex items-center gap-2">
+                  <Plus className="h-4 w-4" />
+                  New Post
+                </Link>
+              </Button>
+            </div>
 
             {/* Theme Toggle */}
             <Button
