@@ -188,10 +188,10 @@ export default function Post() {
         title={post.metaTitle || post.title}
         description={post.metaDescription || post.excerpt}
         type="article"
-        publishedTime={post.publishedAt}
-        modifiedTime={post.updatedAt}
+        publishedTime={post.publishedAt ? new Date(post.publishedAt).toISOString() : undefined}
+        modifiedTime={new Date(post.updatedAt).toISOString()}
         author={post.author.name}
-        tags={post.tags}
+        tags={post.tags || undefined}
         url={`${window.location.origin}/post/${post.slug}`}
       />
       
@@ -308,7 +308,8 @@ export default function Post() {
           <ReactMarkdown
             remarkPlugins={[remarkGfm]}
             components={{
-              code({ node, inline, className, children, ...props }) {
+              code({ node, className, children, ...props }: any) {
+                const inline = props.inline;
                 const match = /language-(\w+)/.exec(className || "");
                 const language = match ? match[1] : '';
                 
@@ -319,7 +320,7 @@ export default function Post() {
                 
                 return !inline && match ? (
                   <SyntaxHighlighter
-                    style={tomorrow}
+                    style={tomorrow as any}
                     language={language}
                     PreTag="div"
                     {...props}
