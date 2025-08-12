@@ -261,7 +261,7 @@ export default function Post() {
         </header>
 
         {/* Article Content */}
-        <div className="prose prose-lg dark:prose-invert max-w-none">
+        <div className="prose prose-lg dark:prose-invert max-w-none markdown-content">
           <ReactMarkdown
             remarkPlugins={[remarkGfm]}
             components={{
