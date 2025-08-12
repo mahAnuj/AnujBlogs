@@ -102,9 +102,9 @@ export function BlogPostCard({ post, featured = false }: BlogPostCardProps) {
             <div className="flex items-center space-x-3 mb-3">
               <span
                 className="px-3 py-1 text-sm font-medium rounded-full text-white"
-                style={{ backgroundColor: post.category.color }}
+                style={{ backgroundColor: post.category?.color || '#3b82f6' }}
               >
-                {post.category.name}
+                {post.category?.name || 'AI Generated'}
               </span>
               <span className="text-sm text-gray-500 dark:text-gray-400">
                 {timeAgo}
@@ -189,9 +189,9 @@ export function BlogPostCard({ post, featured = false }: BlogPostCardProps) {
         <div className="flex items-center space-x-3 mb-3">
           <span
             className="px-3 py-1 text-sm font-medium rounded-full text-white"
-            style={{ backgroundColor: post.category.color }}
+            style={{ backgroundColor: post.category?.color || '#3b82f6' }}
           >
-            {post.category.name}
+            {post.category?.name || 'AI Generated'}
           </span>
           <span className="text-sm text-gray-500 dark:text-gray-400">
             {timeAgo}

@@ -194,7 +194,7 @@ ${diagram}
         status: 'published' as const,
         featuredImageUrl: null,
         authorId: 'ai-system',
-        categoryId: 'ai-generated',
+        categoryId: 'cat-1', // Use existing AI/LLM category
         readTime,
         metadata: {
           sources: content.sources,

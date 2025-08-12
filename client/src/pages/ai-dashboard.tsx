@@ -22,8 +22,11 @@ import {
   AlertCircle,
   Bot,
   Newspaper,
-  BarChart3
+  BarChart3,
+  Home,
+  ArrowLeft
 } from "lucide-react";
+import { Link } from "wouter";
 
 interface GenerationJob {
   id: string;
@@ -170,11 +173,19 @@ export default function AIDashboard() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white flex items-center gap-3">
-            <Bot className="h-8 w-8 text-blue-600" />
-            AI Content Dashboard
-          </h1>
-          <p className="text-gray-600 dark:text-gray-300 mt-2">
+          <div className="flex items-center gap-4 mb-2">
+            <Link href="/">
+              <Button variant="ghost" size="sm">
+                <ArrowLeft className="h-4 w-4 mr-2" />
+                Back to Blog
+              </Button>
+            </Link>
+            <h1 className="text-3xl font-bold text-gray-900 dark:text-white flex items-center gap-3">
+              <Bot className="h-8 w-8 text-blue-600" />
+              AI Content Dashboard
+            </h1>
+          </div>
+          <p className="text-gray-600 dark:text-gray-300">
             Manage automated AI news aggregation and blog post generation
           </p>
         </div>
