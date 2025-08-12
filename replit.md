@@ -18,6 +18,8 @@ Target audience: Young developer community - content should create engagement an
 Enhancement approach: EnhanceAgent should work only on ReviewAgent feedback, not its own knowledge.
 Content completeness: Must address core intent first (what is X, how it works, real examples) before unique insights.
 Foundation requirement: Cover essential basics, definitions, subtopics, historical context, and current applications.
+Content depth: Word count should vary between 1500-2500 words with comprehensive coverage.
+One-shot example: Uses reference blog structure for complex multi-concept topics with step-by-step explanations.
 
 ## System Architecture
 

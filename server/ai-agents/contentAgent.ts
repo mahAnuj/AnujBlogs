@@ -482,6 +482,20 @@ ${sources.map(source => `- **[${source.title}](${source.url})** - ${source.publi
     const topicLower = topic.toLowerCase();
     
     // Generate topic-specific coverage requirements
+    if (topicLower.includes('llm') || (topicLower.includes('prompt') && topicLower.includes('rag')) || 
+        (topicLower.includes('fine') && topicLower.includes('tuning'))) {
+      return `For LLM techniques and concepts, ensure coverage of:
+- Clear definition of each concept mentioned (Prompt Engineering, Fine-Tuning, RAG, MCP, Agents, A2A)
+- How each technique works (step-by-step breakdown like the reference example)
+- When to use each approach (specific use cases and scenarios)
+- Strengths and limitations of each method
+- Real-world applications and examples
+- Comparative analysis between techniques
+- Implementation considerations and best practices
+- Learning pathways and practical next steps
+- Industry adoption and future trends`;
+    }
+    
     if (topicLower.includes('artificial intelligence') || topicLower.includes('ai') && topicLower.includes('beginner')) {
       return `For AI beginner guides, ensure coverage of:
 - What is AI? (Clear, simple definition)
@@ -598,9 +612,44 @@ Target passionate, curious developers who want to stay ahead of the curve. They 
 **TOPIC-SPECIFIC COVERAGE CHECKLIST:**
 ${this.generateTopicChecklist(topic)}
 
-Create a comprehensive, engaging blog post about: ${topic}
+**ONE-SHOT EXAMPLE REFERENCE:**
+Here's an example of excellent blog structure for complex technical topics (RAG vs Fine-tuning):
 
-REMEMBER: Address the fundamental questions first, then add unique insights and perspectives that make this content valuable beyond basic information found elsewhere.`;
+TITLE: "RAG vs. Fine-Tuning: A Comparative Analysis of LLM Learning Techniques"
+
+STRUCTURE:
+1. **Engaging Introduction** - Sets context about LLM limitations and need for specialization
+2. **Concept 1: RAG** 
+   - Clear definition and purpose
+   - Step-by-step how it works (6 detailed steps)
+   - Specific use cases (chatbots, translation, medical research, education, legal)
+   - Benefits (accuracy, reduced hallucinations, adaptability, transparency, cost-effectiveness)
+3. **Concept 2: Fine-Tuning**
+   - Clear definition and purpose  
+   - Step-by-step process (8 detailed steps from pre-training to deployment)
+   - Specific use cases (sentiment analysis, NER, personalized recommendations)
+   - Benefits and considerations
+4. **Comparative Analysis** - Direct comparison of approaches
+5. **Practical Guidance** - When to use which approach
+6. **Conclusion** - Summary and actionable next steps
+
+KEY ELEMENTS:
+- Each major concept gets comprehensive coverage (definition → how it works → use cases → benefits)
+- Step-by-step breakdowns for technical processes
+- Real-world applications with specific examples
+- Comparative analysis highlighting trade-offs
+- 2000+ words with substantial depth on each topic
+
+**NOW CREATE YOUR BLOG:**
+Using the above structure as inspiration, create a comprehensive, engaging blog post about: ${topic}
+
+CRITICAL REQUIREMENTS:
+- Follow the reference structure: clear sections for each concept
+- Provide step-by-step explanations where applicable
+- Include specific real-world use cases and examples
+- Add comparative analysis between different approaches
+- Aim for 1500-2500 words with substantial depth
+- Address fundamentals first, then unique insights and correlations`;
 
       const completion = await this.openai.chat.completions.create({
         model: "gpt-4o", // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
@@ -615,7 +664,7 @@ REMEMBER: Address the fundamental questions first, then add unique insights and 
           }
         ],
         temperature: 0.7,
-        max_tokens: 4000,
+        max_tokens: 6000,
         response_format: { type: "json_object" }
       });
 
