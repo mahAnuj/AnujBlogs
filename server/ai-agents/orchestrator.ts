@@ -123,7 +123,7 @@ class AIOrchestrator {
     try {
       // Step 1: Generate blog post directly on the topic
       this.updateJob(jobId, { status: 'generating', progress: 30 });
-      const generatedContent = await this.contentAgent.generateCustomBlogPost(topic, userPrompt);
+      const generatedContent = await this.contentAgent.generateCustomBlogPost(topic, userPrompt || undefined);
 
       // Step 2: Create code samples if suggested
       this.updateJob(jobId, { status: 'generating', progress: 60 });
