@@ -9,7 +9,7 @@ export interface ReviewResult {
 }
 
 export interface ReviewIssue {
-  type: 'factual_error' | 'hallucination' | 'formatting_error' | 'diagram_error' | 'attribution_missing' | 'content_quality' | 'tag_missing';
+  type: 'factual_error' | 'hallucination' | 'formatting_error' | 'diagram_error' | 'attribution_missing' | 'content_quality' | 'tag_missing' | 'image_error' | 'styling_issue';
   severity: 'low' | 'medium' | 'high' | 'critical';
   description: string;
   location?: string;
@@ -39,13 +39,15 @@ export class ReviewAgent {
         diagramCheck,
         attributionCheck,
         qualityCheck,
-        tagCheck
+        tagCheck,
+        stylingCheck
       ] = await Promise.all([
         this.checkFactualAccuracy(content),
         this.checkDiagramErrors(content),
         this.checkAttributionIntegrity(content),
         this.assessContentQuality(content),
-        this.validateTags(content)
+        this.validateTags(content),
+        this.checkStylingIssues(content)
       ]);
 
       const allIssues: ReviewIssue[] = [
@@ -53,7 +55,8 @@ export class ReviewAgent {
         ...diagramCheck,
         ...attributionCheck,
         ...qualityCheck,
-        ...tagCheck
+        ...tagCheck,
+        ...stylingCheck
       ];
 
       // Calculate quality score
@@ -290,6 +293,81 @@ Respond with JSON array of issues: [{"type": "factual_error|hallucination", "sev
     });
 
     return Math.max(0, score);
+  }
+
+  private async checkStylingIssues(content: GeneratedContent): Promise<ReviewIssue[]> {
+    const issues: ReviewIssue[] = [];
+
+    try {
+      // Check if featured image URL is valid
+      if (content.featuredImage) {
+        try {
+          const response = await fetch(content.featuredImage, { method: 'HEAD' });
+          if (!response.ok) {
+            issues.push({
+              type: 'image_error',
+              severity: 'high',
+              description: `Featured image URL returns ${response.status} error and will display as broken`,
+              location: 'featuredImage',
+              suggestion: 'Replace with a working image URL or remove the featuredImage property'
+            });
+          }
+        } catch (error) {
+          issues.push({
+            type: 'image_error',
+            severity: 'high',
+            description: 'Featured image URL is unreachable and will display as broken',
+            location: 'featuredImage',
+            suggestion: 'Replace with a working image URL or remove the featuredImage property'
+          });
+        }
+      }
+
+      // Check for any inline image links in content that might be broken
+      const imageRegex = /!\[([^\]]*)\]\(([^\)]+)\)/g;
+      let match;
+      while ((match = imageRegex.exec(content.content)) !== null) {
+        const imageUrl = match[2];
+        try {
+          const response = await fetch(imageUrl, { method: 'HEAD' });
+          if (!response.ok) {
+            issues.push({
+              type: 'image_error',
+              severity: 'medium',
+              description: `Inline image "${match[1] || 'untitled'}" returns ${response.status} error`,
+              location: `content (${imageUrl})`,
+              suggestion: 'Replace with a working image URL or remove the image'
+            });
+          }
+        } catch (error) {
+          issues.push({
+            type: 'image_error',
+            severity: 'medium',
+            description: `Inline image "${match[1] || 'untitled'}" is unreachable`,
+            location: `content (${imageUrl})`,
+            suggestion: 'Replace with a working image URL or remove the image'
+          });
+        }
+      }
+
+      // Check for potential formatting issues in markdown
+      if (content.content.includes('```mermaid') && content.content.includes('flowchart TD')) {
+        // This is good - mermaid diagrams should be properly formatted
+      } else if (content.content.includes('```') && !content.content.match(/```\w+/g)) {
+        issues.push({
+          type: 'formatting_error',
+          severity: 'low',
+          description: 'Code blocks found without language specification',
+          location: 'content',
+          suggestion: 'Add language specification to code blocks (e.g., ```javascript, ```python)'
+        });
+      }
+
+    } catch (error) {
+      console.error('Error checking styling issues:', error);
+    }
+
+    return issues;
   }
 
   private generateSuggestedFixes(issues: ReviewIssue[]): string[] {

@@ -256,6 +256,10 @@ export default function Post() {
                 src={post.featuredImage}
                 alt={post.title}
                 className="w-full h-64 lg:h-96 object-cover rounded-xl"
+                onError={(e) => {
+                  const target = e.target as HTMLImageElement;
+                  target.style.display = 'none';
+                }}
               />
             </div>
           )}
