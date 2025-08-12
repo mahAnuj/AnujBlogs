@@ -15,9 +15,35 @@ import { formatDistanceToNow, format } from "date-fns";
 import ReactMarkdown from "react-markdown";
 import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
 import { tomorrow } from "react-syntax-highlighter/dist/esm/styles/prism";
+import remarkGfm from "remark-gfm";
+import mermaid from "mermaid";
+import { useEffect, useRef } from "react";
 import { Link } from "wouter";
 import { Loader2 } from "lucide-react";
 import type { PostWithDetails } from "@shared/schema";
+
+// Mermaid Diagram Component
+function MermaidDiagram({ chart }: { chart: string }) {
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (ref.current) {
+      mermaid.initialize({
+        startOnLoad: true,
+        theme: 'default',
+        securityLevel: 'loose',
+      });
+      
+      mermaid.render('mermaid-diagram-' + Math.random().toString(36).substr(2, 9), chart, (svgCode) => {
+        if (ref.current) {
+          ref.current.innerHTML = svgCode;
+        }
+      });
+    }
+  }, [chart]);
+
+  return <div ref={ref} className="my-6 flex justify-center" />;
+}
 
 export default function Post() {
   const params = useParams();
@@ -259,13 +285,21 @@ export default function Post() {
         {/* Article Content */}
         <div className="prose prose-lg dark:prose-invert max-w-none">
           <ReactMarkdown
+            remarkPlugins={[remarkGfm]}
             components={{
               code({ node, inline, className, children, ...props }) {
                 const match = /language-(\w+)/.exec(className || "");
+                const language = match ? match[1] : '';
+                
+                // Handle Mermaid diagrams
+                if (language === 'mermaid') {
+                  return <MermaidDiagram chart={String(children).replace(/\n$/, "")} />;
+                }
+                
                 return !inline && match ? (
                   <SyntaxHighlighter
                     style={tomorrow}
-                    language={match[1]}
+                    language={language}
                     PreTag="div"
                     {...props}
                   >
@@ -277,6 +311,39 @@ export default function Post() {
                   </code>
                 );
               },
+              h1: ({ children }) => (
+                <h1 className="text-3xl font-bold mb-6 text-gray-900 dark:text-white">{children}</h1>
+              ),
+              h2: ({ children }) => (
+                <h2 className="text-2xl font-semibold mb-4 mt-8 text-gray-900 dark:text-white">{children}</h2>
+              ),
+              h3: ({ children }) => (
+                <h3 className="text-xl font-semibold mb-3 mt-6 text-gray-900 dark:text-white">{children}</h3>
+              ),
+              p: ({ children }) => (
+                <p className="mb-4 leading-relaxed text-gray-700 dark:text-gray-300">{children}</p>
+              ),
+              ul: ({ children }) => (
+                <ul className="list-disc list-inside mb-4 space-y-2 text-gray-700 dark:text-gray-300">{children}</ul>
+              ),
+              ol: ({ children }) => (
+                <ol className="list-decimal list-inside mb-4 space-y-2 text-gray-700 dark:text-gray-300">{children}</ol>
+              ),
+              blockquote: ({ children }) => (
+                <blockquote className="border-l-4 border-blue-500 pl-4 italic my-6 text-gray-600 dark:text-gray-400">
+                  {children}
+                </blockquote>
+              ),
+              a: ({ href, children }) => (
+                <a 
+                  href={href} 
+                  className="text-blue-600 dark:text-blue-400 hover:underline"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  {children}
+                </a>
+              ),
             }}
           >
             {post.content}
