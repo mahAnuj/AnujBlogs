@@ -30,19 +30,20 @@ export default function Post() {
   const queryClient = useQueryClient();
 
   const { data: post, isLoading, error } = useQuery<PostWithDetails>({
-    queryKey: ["/api/posts", slug],
+    queryKey: [`/api/posts/${slug}`],
     enabled: !!slug,
   });
 
   const { data: relatedPosts = [] } = useQuery<PostWithDetails[]>({
-    queryKey: ["/api/posts", { category: post?.category.slug }],
+    queryKey: ["/api/posts", "category", post?.category.slug],
+    queryFn: () => fetch(`/api/posts?category=${post?.category.slug}`).then(res => res.json()),
     enabled: !!post?.category.slug,
   });
 
   const likeMutation = useMutation({
     mutationFn: () => apiRequest("POST", `/api/posts/${post?.id}/like`),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/posts", slug] });
+      queryClient.invalidateQueries({ queryKey: [`/api/posts/${slug}`] });
       toast({
         title: "Post liked!",
         description: "Thanks for your engagement.",
@@ -184,7 +185,9 @@ export default function Post() {
             </span>
           </div>
           
-
+          <h1 className="text-4xl font-bold text-gray-900 dark:text-white mb-6 leading-tight">
+            {post.title}
+          </h1>
           
           <p className="text-xl text-gray-600 dark:text-gray-300 mb-8 leading-relaxed">
             {post.excerpt}
@@ -365,24 +368,22 @@ export default function Post() {
             <h3 className="text-2xl font-bold mb-6">Related Posts</h3>
             <div className="grid md:grid-cols-3 gap-6">
               {filteredRelatedPosts.map((relatedPost) => (
-                <Card key={relatedPost.id} className="hover:shadow-md transition-shadow">
-                  <CardContent className="p-4">
-                    <Link href={`/post/${relatedPost.slug}`}>
-                      <a>
-                        <h4 className="font-semibold text-secondary dark:text-white mb-2 hover:text-primary transition-colors line-clamp-2">
-                          {relatedPost.title}
-                        </h4>
-                        <p className="text-sm text-gray-600 dark:text-gray-300 mb-3 line-clamp-2">
-                          {relatedPost.excerpt}
-                        </p>
-                        <div className="flex items-center space-x-2 text-xs text-gray-500 dark:text-gray-400">
-                          <Clock size={12} />
-                          <span>{relatedPost.readTime} min read</span>
-                        </div>
-                      </a>
-                    </Link>
-                  </CardContent>
-                </Card>
+                <Link key={relatedPost.id} href={`/post/${relatedPost.slug}`}>
+                  <Card className="hover:shadow-md transition-shadow">
+                    <CardContent className="p-4">
+                      <h4 className="font-semibold text-secondary dark:text-white mb-2 hover:text-primary transition-colors line-clamp-2">
+                        {relatedPost.title}
+                      </h4>
+                      <p className="text-sm text-gray-600 dark:text-gray-300 mb-3 line-clamp-2">
+                        {relatedPost.excerpt}
+                      </p>
+                      <div className="flex items-center space-x-2 text-xs text-gray-500 dark:text-gray-400">
+                        <Clock size={12} />
+                        <span>{relatedPost.readTime} min read</span>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </Link>
               ))}
             </div>
           </div>
