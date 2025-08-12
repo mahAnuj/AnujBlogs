@@ -65,6 +65,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get post by ID (for editing)
+  app.get("/api/posts/id/:id", async (req, res) => {
+    try {
+      const { id } = req.params;
+      const post = await storage.getPost(id);
+      
+      if (!post) {
+        return res.status(404).json({ error: "Post not found" });
+      }
+      
+      res.json(post);
+    } catch (error) {
+      console.error("Error fetching post by ID:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
   app.get("/api/posts/:slug", async (req, res) => {
     try {
       const { slug } = req.params;

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -42,6 +42,10 @@ export default function CreatePost() {
   const queryClient = useQueryClient();
   const [newTag, setNewTag] = useState("");
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
+  
+  // Check if we're editing an existing post
+  const urlParams = new URLSearchParams(window.location.search);
+  const editPostId = urlParams.get('edit');
 
   const { data: categories = [] } = useQuery<Category[]>({
     queryKey: ["/api/categories"],
@@ -49,6 +53,12 @@ export default function CreatePost() {
 
   const { data: allTags = [] } = useQuery<Tag[]>({
     queryKey: ["/api/tags"],
+  });
+
+  // Fetch existing post data if editing
+  const { data: existingPost } = useQuery<any>({
+    queryKey: [`/api/posts/id/${editPostId}`],
+    enabled: !!editPostId,
   });
 
   const form = useForm<CreatePostForm>({
@@ -67,6 +77,25 @@ export default function CreatePost() {
     },
   });
 
+  // Update form when existing post data is loaded
+  useEffect(() => {
+    if (existingPost) {
+      form.reset({
+        title: existingPost.title || "",
+        slug: existingPost.slug || "",
+        excerpt: existingPost.excerpt || "",
+        content: existingPost.content || "",
+        categoryId: existingPost.categoryId || "",
+        tags: existingPost.tags || [],
+        status: existingPost.status || "draft",
+        metaTitle: existingPost.metaTitle || "",
+        metaDescription: existingPost.metaDescription || "",
+        readTime: existingPost.readTime || 5,
+      });
+      setSelectedTags(existingPost.tags || []);
+    }
+  }, [existingPost, form]);
+
   const createPostMutation = useMutation({
     mutationFn: async (data: CreatePostForm) => {
       const postData: InsertPost = {
@@ -76,26 +105,40 @@ export default function CreatePost() {
         readTime: data.readTime || estimateReadTime(data.content),
         publishedAt: data.status === "published" ? new Date() : null,
       };
-      const response = await fetch("/api/posts", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(postData),
-      });
-      if (!response.ok) throw new Error("Failed to create post");
-      return response.json();
+      
+      if (editPostId) {
+        // Update existing post
+        const response = await fetch(`/api/posts/${editPostId}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(postData),
+        });
+        if (!response.ok) throw new Error("Failed to update post");
+        return response.json();
+      } else {
+        // Create new post
+        const response = await fetch("/api/posts", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(postData),
+        });
+        if (!response.ok) throw new Error("Failed to create post");
+        return response.json();
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/posts"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/posts/drafts"] });
       toast({
         title: "Success",
-        description: "Post created successfully!",
+        description: editPostId ? "Post updated successfully!" : "Post created successfully!",
       });
-      setLocation("/");
+      setLocation(editPostId ? "/ai-dashboard" : "/");
     },
     onError: (error) => {
       toast({
         title: "Error",
-        description: error instanceof Error ? error.message : "Failed to create post",
+        description: error instanceof Error ? error.message : (editPostId ? "Failed to update post" : "Failed to create post"),
         variant: "destructive",
       });
     },
@@ -146,9 +189,14 @@ export default function CreatePost() {
   return (
     <div className="container mx-auto px-4 py-8 max-w-6xl">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold mb-2">Create New Post</h1>
+        <h1 className="text-3xl font-bold mb-2">
+          {editPostId ? "Edit Post" : "Create New Post"}
+        </h1>
         <p className="text-muted-foreground">
-          Write and publish a new blog post with our integrated editor
+          {editPostId ? 
+            "Update your existing post with our integrated editor" : 
+            "Write and publish a new blog post with our integrated editor"
+          }
         </p>
       </div>
 
