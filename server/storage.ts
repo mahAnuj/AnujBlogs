@@ -1606,9 +1606,17 @@ This article synthesizes information from the following sources:
     const post = this.posts.get(id);
     if (!post) return undefined;
 
+    // Fix malformed Mermaid blocks in content if present
+    let content = updatePost.content || post.content;
+    if (content && typeof content === 'string') {
+      content = content.replace(/```mermaid\s*```mermaid/g, '```mermaid');
+      content = content.replace(/```\s*```/g, '```');
+    }
+
     const updatedPost: Post = {
       ...post,
       ...updatePost,
+      content,
       tags: updatePost.tags ? [...updatePost.tags] : post.tags ? [...post.tags] : [],
       updatedAt: new Date(),
     };
