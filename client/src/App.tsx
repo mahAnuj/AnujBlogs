@@ -17,7 +17,7 @@ function Router() {
     <Switch>
       <Route path="/" component={Home} />
       <Route path="/post/:slug" component={Post} />
-      <Route path="/create" component={CreatePost} />
+      <Route path="/create-post" component={CreatePost} />
       <Route path="/create-markdown" component={CreateMarkdownPost} />
       <Route path="/ai-dashboard" component={AIDashboard} />
       <Route path="/notion-setup" component={NotionSetup} />
