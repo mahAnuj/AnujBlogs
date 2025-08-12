@@ -478,6 +478,75 @@ ${sources.map(source => `- **[${source.title}](${source.url})** - ${source.publi
     return matches / topicWords.length;
   }
 
+  private async performWebResearch(topic: string): Promise<string> {
+    try {
+      console.log(`Performing web research for: ${topic}`);
+      
+      // Extract key terms and concepts from the topic for targeted research
+      const searchQueries = this.generateSearchQueries(topic);
+      
+      // Perform multiple searches for comprehensive coverage
+      const searchResults = await Promise.all(
+        searchQueries.map(async (query) => {
+          try {
+            const result = await webSearch(query);
+            return `**Search: "${query}"**\n${result}\n\n`;
+          } catch (error) {
+            console.error(`Web search failed for query "${query}":`, error);
+            return `**Search: "${query}"**\nNo current information found.\n\n`;
+          }
+        })
+      );
+      
+      return searchResults.join('');
+    } catch (error) {
+      console.error('Web research failed:', error);
+      return 'Unable to retrieve current web information for this topic.';
+    }
+  }
+
+  private generateSearchQueries(topic: string): string[] {
+    const topicLower = topic.toLowerCase();
+    const queries = [`${topic} 2024 latest developments`];
+    
+    // Add specific queries based on topic content
+    if (topicLower.includes('llm') || topicLower.includes('ai')) {
+      queries.push(
+        `${topic} current trends 2024`,
+        `${topic} real world applications 2024`,
+        `${topic} best practices 2024`
+      );
+      
+      // Add specific term searches for AI topics
+      if (topicLower.includes('mcp')) {
+        queries.push('Model Context Protocol MCP AI 2024');
+      }
+      if (topicLower.includes('a2a')) {
+        queries.push('Agent to Agent A2A protocol AI 2024');
+      }
+      if (topicLower.includes('rag')) {
+        queries.push('RAG Retrieval Augmented Generation 2024');
+      }
+      if (topicLower.includes('prompt engineering')) {
+        queries.push('prompt engineering techniques 2024');
+      }
+      if (topicLower.includes('fine-tuning') || topicLower.includes('fine tuning')) {
+        queries.push('LLM fine-tuning methods 2024');
+      }
+      if (topicLower.includes('agents')) {
+        queries.push('AI agents frameworks 2024');
+      }
+    }
+    
+    // Add general technology queries
+    if (topicLower.includes('react') || topicLower.includes('javascript') || topicLower.includes('frontend')) {
+      queries.push(`${topic} ecosystem 2024`, `${topic} frameworks tools 2024`);
+    }
+    
+    // Limit to 4-5 queries to avoid overwhelming the system
+    return queries.slice(0, 5);
+  }
+
   private generateTopicChecklist(topic: string): string {
     const topicLower = topic.toLowerCase();
     
@@ -547,16 +616,22 @@ ${sources.map(source => `- **[${source.title}](${source.url})** - ${source.publi
     try {
       console.log(`Generating custom blog post for topic: ${topic}`);
 
-      // Step 1: Research current information and trends
-      const researchData = await this.researchTopic(topic);
+      // Step 1: Perform comprehensive web research for latest information
+      const webResearchData = await this.performWebResearch(topic);
+      
+      // Step 2: Research current trends (existing method)
+      const trendsData = await this.researchTopic(topic);
       
       // Step 2: Get related content from our site for internal linking
       const relatedPosts = await this.findRelatedContent(topic);
 
       const prompt = `You are an expert technical writer creating a unique, valuable blog post about: "${topic}"
 
-**Research Context:**
-${researchData}
+**Latest Web Research:**
+${webResearchData}
+
+**Additional Research Context:**
+${trendsData}
 
 **Related Content on Our Site:**
 ${relatedPosts.length > 0 ? relatedPosts.map(post => `- [${post.title}](${post.slug}): ${post.excerpt}`).join('\n') : 'No related content found.'}
