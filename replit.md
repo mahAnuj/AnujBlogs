@@ -16,6 +16,8 @@ Popular tags: AI (guaranteed), one famous frontend tag, one backend tag, and tre
 Content storytelling: Blog content should tell a cohesive story with smooth transitions between sections.
 Target audience: Young developer community - content should create engagement and desire to read more.
 Enhancement approach: EnhanceAgent should work only on ReviewAgent feedback, not its own knowledge.
+Content completeness: Must address core intent first (what is X, how it works, real examples) before unique insights.
+Foundation requirement: Cover essential basics, definitions, subtopics, historical context, and current applications.
 
 ## System Architecture
 

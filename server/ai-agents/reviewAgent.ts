@@ -391,11 +391,11 @@ Respond with JSON array of issues: [{"type": "factual_error|hallucination", "sev
 **Content:** ${content.content}
 
 **Assessment Criteria:**
-1. Does this provide a unique perspective or angle not commonly found elsewhere?
-2. Does it correlate different aspects or synthesize information in novel ways?
-3. Are there original insights that add new value to the topic?
-4. Does it avoid rehashing common knowledge without adding value?
-5. Does it provide practical applications or examples not typically covered?
+1. **INTENT FULFILLMENT:** Does this address the core intent and fundamental questions readers expect?
+2. **FOUNDATION COVERAGE:** Are essential basics, definitions, and subtopics properly covered?
+3. **REAL-WORLD EXAMPLES:** Does it include practical, relatable examples of current usage?
+4. **HISTORICAL CONTEXT:** When relevant, does it cover origins, evolution, and popularity drivers?
+5. **UNIQUE INSIGHTS:** Does it provide perspectives and correlations not found elsewhere?
 6. **STORYTELLING FLOW:** Do sections connect smoothly with natural transitions?
 7. **NARRATIVE COHESION:** Does the content tell a compelling story from start to finish?
 8. **DEVELOPER ENGAGEMENT:** Will this capture and maintain young developers' attention?
@@ -428,6 +428,37 @@ Rate both uniqueness AND storytelling flow on separate 1-10 scales.`;
 
       const response = completion.choices[0]?.message?.content || '';
       const issues: ReviewIssue[] = [];
+
+      // Parse the response for intent fulfillment issues
+      if (response.toLowerCase().includes('missing fundamentals') || response.toLowerCase().includes('lacks basics') ||
+          response.toLowerCase().includes('incomplete coverage') || response.toLowerCase().includes('core intent not addressed')) {
+        issues.push({
+          type: 'content_quality',
+          severity: 'critical',
+          description: 'Content fails to address core intent and fundamental questions readers expect',
+          suggestion: 'Add comprehensive coverage of basic concepts, definitions, and essential subtopics before diving into advanced material'
+        });
+      }
+
+      if (response.toLowerCase().includes('missing examples') || response.toLowerCase().includes('no real-world') ||
+          response.toLowerCase().includes('lacks practical')) {
+        issues.push({
+          type: 'content_quality',
+          severity: 'high',
+          description: 'Content lacks practical real-world examples and applications',
+          suggestion: 'Include specific, relatable examples of how this is currently being used in practice'
+        });
+      }
+
+      if (response.toLowerCase().includes('missing history') || response.toLowerCase().includes('no context') ||
+          response.toLowerCase().includes('lacks background')) {
+        issues.push({
+          type: 'content_quality',
+          severity: 'medium',
+          description: 'Content lacks important historical context and background',
+          suggestion: 'Add brief coverage of origins, key milestones, and factors driving current popularity'
+        });
+      }
 
       // Parse the response for specific uniqueness issues
       if (response.toLowerCase().includes('lacks uniqueness') || response.toLowerCase().includes('common knowledge')) {

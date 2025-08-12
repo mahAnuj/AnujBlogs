@@ -478,6 +478,51 @@ ${sources.map(source => `- **[${source.title}](${source.url})** - ${source.publi
     return matches / topicWords.length;
   }
 
+  private generateTopicChecklist(topic: string): string {
+    const topicLower = topic.toLowerCase();
+    
+    // Generate topic-specific coverage requirements
+    if (topicLower.includes('artificial intelligence') || topicLower.includes('ai') && topicLower.includes('beginner')) {
+      return `For AI beginner guides, ensure coverage of:
+- What is AI? (Clear, simple definition)
+- Main types/subsets of AI (Machine Learning, Deep Learning, NLP, Computer Vision, etc.)
+- Real-world examples (recommendations, voice assistants, autonomous vehicles, medical diagnosis)
+- Brief history (from 1950s to today, key milestones like Deep Blue, AlphaGo, ChatGPT)
+- Current popularity drivers (big data, computing power, algorithmic breakthroughs)
+- How AI impacts daily life and various industries
+- Learning resources and next steps for beginners`;
+    }
+    
+    if (topicLower.includes('machine learning') || topicLower.includes('ml')) {
+      return `For Machine Learning topics, ensure coverage of:
+- What is Machine Learning? (Definition and core concepts)
+- Types of ML (supervised, unsupervised, reinforcement learning)
+- Real-world applications and use cases
+- Popular algorithms and when to use them
+- Current tools and frameworks
+- Learning path and practical next steps`;
+    }
+    
+    if (topicLower.includes('react')) {
+      return `For React topics, ensure coverage of:
+- What React is and why it's popular
+- Core concepts and how they work
+- Real-world usage examples and case studies
+- Current ecosystem and best practices
+- Practical examples developers can try
+- Learning resources and career applications`;
+    }
+    
+    // Generic checklist for other topics
+    return `For this topic, ensure coverage of:
+- Clear definition and core concepts
+- Main categories, types, or approaches
+- Real-world examples and current usage
+- Historical context and evolution
+- Current trends and adoption drivers
+- Practical applications and next steps`;
+  }
+
   async generateCustomBlogPost(topic: string): Promise<GeneratedContent> {
     try {
       console.log(`Generating custom blog post for topic: ${topic}`);
@@ -513,12 +558,20 @@ Target passionate, curious developers who want to stay ahead of the curve. They 
 
 **CONTENT STRUCTURE - NARRATIVE FLOW:**
 1. **Hook Introduction** - Start with an intriguing scenario or question that resonates with developers
-2. **Story Setup** - Establish the context and why this matters for their career/projects
-3. **Progressive Revelation** - Gradually unveil concepts with smooth transitions
-4. **Practical Connection** - Show how each concept connects to real developer work
-5. **Building Momentum** - Each section should build on the previous, creating engagement
-6. **Expert Perspective** - Include insights from successful developers/companies
-7. **Inspiring Conclusion** - End with clear next steps and motivation to explore more
+2. **Foundation First** - Cover essential basics that fulfill the reader's primary intent (what, how, when, where)
+3. **Progressive Revelation** - Build from fundamentals to advanced concepts with smooth transitions
+4. **Real-World Context** - Show practical examples and current applications
+5. **Historical Perspective** - Brief coverage of origins, key milestones, and popularity growth
+6. **Unique Insights** - Provide correlations and perspectives not found elsewhere
+7. **Learning Pathways** - Clear next steps and resources for continued learning
+8. **Inspiring Conclusion** - End with motivation and practical actions readers can take
+
+**FUNDAMENTAL COVERAGE REQUIREMENTS:**
+- Always address the core intent of the topic first (e.g., "what is X?", "how does X work?")
+- Include essential subtopics and classifications
+- Provide real-world examples that readers can relate to
+- Cover historical context when relevant (origins, evolution, key milestones)
+- Explain current adoption and popularity drivers
 
 **ENGAGEMENT PRINCIPLES:**
 - Use conversational tone that speaks directly to developers
@@ -542,7 +595,12 @@ Target passionate, curious developers who want to stay ahead of the curve. They 
   "externalReferences": ["Key external resources for deeper learning"]
 }
 
-Create a truly unique, valuable blog post about: ${topic}`;
+**TOPIC-SPECIFIC COVERAGE CHECKLIST:**
+${this.generateTopicChecklist(topic)}
+
+Create a comprehensive, engaging blog post about: ${topic}
+
+REMEMBER: Address the fundamental questions first, then add unique insights and perspectives that make this content valuable beyond basic information found elsewhere.`;
 
       const completion = await this.openai.chat.completions.create({
         model: "gpt-4o", // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
