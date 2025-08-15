@@ -1,7 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage.js";
-import { insertPostSchema, insertCommentSchema, updatePostSchema } from "@shared/schema";
+import { insertPostSchema, insertCommentSchema, updatePostSchema } from "../shared/schema.js";
 import { z } from "zod";
 import { AIOrchestrator } from "./ai-agents/orchestrator.js";
 import { NewsAgent } from "./ai-agents/newsAgent.js";

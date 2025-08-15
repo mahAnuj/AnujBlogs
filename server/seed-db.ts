@@ -1,5 +1,5 @@
 import { db } from "./db.js";
-import { users, categories, tags, posts } from "@shared/schema";
+import { users, categories, tags, posts } from "../shared/schema.js";
 import { randomUUID } from "crypto";
 
 async function seedDatabase() {

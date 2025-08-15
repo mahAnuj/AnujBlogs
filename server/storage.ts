@@ -1,4 +1,4 @@
-import { type User, type InsertUser, type Category, type InsertCategory, type Tag, type InsertTag, type Post, type InsertPost, type UpdatePost, type Comment, type InsertComment, type PostWithDetails, type CommentWithReplies } from "@shared/schema";
+import { type User, type InsertUser, type Category, type InsertCategory, type Tag, type InsertTag, type Post, type InsertPost, type UpdatePost, type Comment, type InsertComment, type PostWithDetails, type CommentWithReplies } from "../shared/schema.js";
 import { randomUUID } from "crypto";
 
 
@@ -1726,7 +1726,7 @@ This article synthesizes information from the following sources:
 // Database storage implementation using PostgreSQL
 import { db } from "./db.js";
 import { eq, ilike, or, inArray, sql } from "drizzle-orm";
-import { users, categories, tags, posts, comments, insertUserSchema, insertCategorySchema, insertTagSchema, insertPostSchema, insertCommentSchema } from "@shared/schema";
+import { users, categories, tags, posts, comments, insertUserSchema, insertCategorySchema, insertTagSchema, insertPostSchema, insertCommentSchema } from "../shared/schema.js";
 
 export class DatabaseStorage implements IStorage {
   // Users

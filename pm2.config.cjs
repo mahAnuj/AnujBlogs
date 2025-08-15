@@ -3,7 +3,7 @@ module.exports = {
     name: 'anujblog-backend',
     script: 'server/index.ts',
     interpreter: 'node',
-    interpreter_args: '--loader ts-node/esm -r tsconfig-paths/register -r dotenv/config',
+    interpreter_args: '--loader ts-node/esm -r dotenv/config',
     env: {
       NODE_ENV: 'production',
       SERVE_STATIC: 'false',
