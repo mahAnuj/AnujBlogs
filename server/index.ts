@@ -1,6 +1,6 @@
 import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes.js";
-import { setupVite, serveStatic, log } from "./vite.js";
+import { log } from "./vite.js";
 
 const app = express();
 app.use(express.json());
@@ -51,9 +51,11 @@ app.use((req, res, next) => {
   // setting up all the other routes so the catch-all route
   // doesn't interfere with the other routes
   if (app.get("env") === "development") {
+    const { setupVite } = await import("./vite.js");
     await setupVite(app, server);
   } else {
     if (process.env.SERVE_STATIC !== 'false') {
+      const { serveStatic } = await import("./vite.js");
       serveStatic(app);
     }
   }
