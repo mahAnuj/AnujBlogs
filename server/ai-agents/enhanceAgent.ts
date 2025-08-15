@@ -1,6 +1,6 @@
 import OpenAI from 'openai';
-import type { GeneratedContent } from './contentAgent';
-import type { ReviewResult } from './reviewAgent';
+import type { GeneratedContent } from './contentAgent.js';
+import type { ReviewResult } from './reviewAgent.js';
 
 export interface EnhancementResult {
   enhancedContent: GeneratedContent;

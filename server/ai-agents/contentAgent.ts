@@ -1,6 +1,6 @@
 import OpenAI from 'openai';
-import type { NewsArticle } from './newsAgent';
-import type { KnowledgeContext } from './latestKnowledgeAgent';
+import type { NewsArticle } from './newsAgent.js';
+import type { KnowledgeContext } from './latestKnowledgeAgent.js';
 
 export interface GeneratedContent {
   title: string;

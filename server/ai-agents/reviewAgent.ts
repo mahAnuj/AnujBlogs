@@ -1,5 +1,5 @@
 import OpenAI from 'openai';
-import type { GeneratedContent } from './contentAgent';
+import type { GeneratedContent } from './contentAgent.js';
 
 export interface ReviewResult {
   approved: boolean;

@@ -1,10 +1,10 @@
 import { randomUUID } from 'crypto';
-import type { NewsAgent, NewsArticle } from './newsAgent';
-import type { ContentAgent, GeneratedContent } from './contentAgent';
-import type { ReviewAgent, ReviewResult } from './reviewAgent';
-import type { EnhanceAgent, EnhancementResult } from './enhanceAgent';
-import { LatestKnowledgeAgent } from './latestKnowledgeAgent';
-import type { IStorage } from '../storage';
+import type { NewsAgent, NewsArticle } from './newsAgent.js';
+import type { ContentAgent, GeneratedContent } from './contentAgent.js';
+import type { ReviewAgent, ReviewResult } from './reviewAgent.js';
+import type { EnhanceAgent, EnhancementResult } from './enhanceAgent.js';
+import { LatestKnowledgeAgent } from './latestKnowledgeAgent.js';
+import type { IStorage } from '../storage.js';
 
 export interface GenerationConfig {
   hoursBack: number;
