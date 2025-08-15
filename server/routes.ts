@@ -1,14 +1,14 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
-import { storage } from "./storage";
+import { storage } from "./storage.js";
 import { insertPostSchema, insertCommentSchema, updatePostSchema } from "@shared/schema";
 import { z } from "zod";
-import { AIOrchestrator } from "./ai-agents/orchestrator";
-import { NewsAgent } from "./ai-agents/newsAgent";
-import { ContentAgent } from "./ai-agents/contentAgent";
-import { ReviewAgent } from "./ai-agents/reviewAgent";
-import { EnhanceAgent } from "./ai-agents/enhanceAgent";
-import { LatestKnowledgeAgent } from "./ai-agents/latestKnowledgeAgent";
+import { AIOrchestrator } from "./ai-agents/orchestrator.js";
+import { NewsAgent } from "./ai-agents/newsAgent.js";
+import { ContentAgent } from "./ai-agents/contentAgent.js";
+import { ReviewAgent } from "./ai-agents/reviewAgent.js";
+import { EnhanceAgent } from "./ai-agents/enhanceAgent.js";
+import { LatestKnowledgeAgent } from "./ai-agents/latestKnowledgeAgent.js";
 
 // Initialize AI agents
 const newsAgent = new NewsAgent();

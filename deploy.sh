@@ -1,15 +1,12 @@
-#!/bin/bash
+#!/usr/bin/env bash
 set -euo pipefail
 
 # AnujBlog Backend Deployment Script
 echo "🚀 Starting AnujBlog Backend Deployment..."
 
 # 1) Install/refresh dependencies (ensures ts-node & tsconfig-paths available)
-echo "📦 Installing dependencies (prefer npm ci, fallback to npm install)..."
-if ! npm ci; then
-  echo "ℹ️  npm ci failed due to lock mismatch; running npm install to update lockfile..."
-  npm install
-fi
+echo "📦 Installing dependencies..."
+npm install --verbose
 
 # 2) Optionally run DB migrations if DATABASE_URL is present in this shell
 if [[ -n "${DATABASE_URL:-}" ]]; then

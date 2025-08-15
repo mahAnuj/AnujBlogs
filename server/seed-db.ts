@@ -1,4 +1,4 @@
-import { db } from "./db";
+import { db } from "./db.js";
 import { users, categories, tags, posts } from "@shared/schema";
 import { randomUUID } from "crypto";
 

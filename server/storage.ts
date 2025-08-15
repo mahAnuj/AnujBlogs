@@ -1724,7 +1724,7 @@ This article synthesizes information from the following sources:
 
 // Use memory storage for reliable local development
 // Database storage implementation using PostgreSQL
-import { db } from "./db";
+import { db } from "./db.js";
 import { eq, ilike, or, inArray, sql } from "drizzle-orm";
 import { users, categories, tags, posts, comments, insertUserSchema, insertCategorySchema, insertTagSchema, insertPostSchema, insertCommentSchema } from "@shared/schema";
 
