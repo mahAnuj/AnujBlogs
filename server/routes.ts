@@ -1,5 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
+import https from "https";
+import fs from "fs";
 import { storage } from "./storage.js";
 import { insertPostSchema, insertCommentSchema, updatePostSchema } from "../shared/schema.js";
 import { z } from "zod";
@@ -339,6 +341,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  const httpServer = createServer(app);
+  // SSL Configuration - only for production
+  const isProduction = process.env.NODE_ENV === 'production';
+  const sslKeyPath = process.env.SSL_KEY_PATH;
+  const sslCertPath = process.env.SSL_CERT_PATH;
+  const enableSSL = isProduction && sslKeyPath && sslCertPath;
+
+  let httpServer: Server;
+
+  if (enableSSL) {
+    // Production: Create HTTPS server with SSL certificates
+    try {
+      const options = {
+        key: fs.readFileSync(sslKeyPath),
+        cert: fs.readFileSync(sslCertPath),
+      };
+      httpServer = https.createServer(options, app);
+      console.log('✅ HTTPS server configured with SSL certificates');
+    } catch (error) {
+      console.error('❌ Failed to load SSL certificates, falling back to HTTP:', error);
+      httpServer = createServer(app);
+    }
+  } else {
+    // Development: Create regular HTTP server
+    httpServer = createServer(app);
+    console.log('🔓 HTTP server configured (development mode)');
+  }
+
   return httpServer;
 }

@@ -65,11 +65,11 @@ app.use((req, res, next) => {
   // this serves both the API and the client.
   // It is the only port that is not firewalled.
   const port = parseInt(process.env.PORT || '5000', 10);
-  server.listen({
-    port,
-    host: "0.0.0.0",
-    reusePort: true,
-  }, () => {
-    log(`serving on port ${port}`);
+  // For development, use localhost to avoid socket issues on macOS
+  // For production, you can set HOST environment variable to 0.0.0.0
+  const host = process.env.NODE_ENV === 'production' ? (process.env.HOST || '0.0.0.0') : 'localhost';
+  
+  server.listen(port, host, () => {
+    log(`serving on ${host}:${port}`);
   });
 })();
