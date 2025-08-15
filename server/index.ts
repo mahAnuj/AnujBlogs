@@ -1,6 +1,6 @@
 import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes.js";
-import { log } from "./vite.js";
+import { log } from "./utils.js";
 
 const app = express();
 app.use(express.json());
