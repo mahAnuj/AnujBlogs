@@ -8,3 +8,8 @@ export function log(message: string, source = "express") {
 
   console.log(`${formattedTime} [${source}] ${message}`);
 }
+
+// Function to generate random string (simplified nanoid replacement)
+export function generateId() {
+  return Math.random().toString(36).substring(2, 15);
+}
