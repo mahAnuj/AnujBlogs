@@ -21,6 +21,15 @@ const knowledgeAgent = new LatestKnowledgeAgent();
 const aiOrchestrator = new AIOrchestrator(newsAgent, contentAgent, reviewAgent, enhanceAgent, knowledgeAgent, storage);
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Health check endpoint - no database required
+  app.get("/api/health", (req, res) => {
+    res.json({ 
+      status: "ok", 
+      timestamp: new Date().toISOString(),
+      environment: process.env.NODE_ENV || 'development'
+    });
+  });
+
   // Categories
   app.get("/api/categories", async (req, res) => {
     try {
@@ -28,7 +37,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(categories);
     } catch (error) {
       console.error("Error fetching categories:", error);
-      res.status(500).json({ error: "Internal server error" });
+      res.status(500).json({ 
+        error: "Internal server error",
+        message: error instanceof Error ? error.message : "Unknown error",
+        timestamp: new Date().toISOString()
+      });
     }
   });
 
@@ -56,7 +69,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(posts);
     } catch (error) {
       console.error("Error fetching posts:", error);
-      res.status(500).json({ error: "Internal server error" });
+      res.status(500).json({ 
+        error: "Internal server error",
+        message: error instanceof Error ? error.message : "Unknown error",
+        timestamp: new Date().toISOString(),
+        endpoint: "/api/posts"
+      });
     }
   });
 
@@ -341,7 +359,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // SSL Configuration - only for production
+  // SSL Configuration - only for production and when certificates exist
   const isProduction = process.env.NODE_ENV === 'production';
   const sslKeyPath = process.env.SSL_KEY_PATH;
   const sslCertPath = process.env.SSL_CERT_PATH;
@@ -350,22 +368,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
   let httpServer: Server;
 
   if (enableSSL) {
-    // Production: Create HTTPS server with SSL certificates
+    // Check if SSL certificate files actually exist
     try {
+      if (!fs.existsSync(sslKeyPath!) || !fs.existsSync(sslCertPath!)) {
+        throw new Error(`SSL certificate files not found: ${sslKeyPath}, ${sslCertPath}`);
+      }
+      
       const options = {
         key: fs.readFileSync(sslKeyPath),
         cert: fs.readFileSync(sslCertPath),
       };
       httpServer = https.createServer(options, app);
       console.log('✅ HTTPS server configured with SSL certificates');
+      console.log(`🔒 SSL Key: ${sslKeyPath}`);
+      console.log(`🔒 SSL Cert: ${sslCertPath}`);
     } catch (error) {
-      console.error('❌ Failed to load SSL certificates, falling back to HTTP:', error);
+      console.error('❌ Failed to load SSL certificates, falling back to HTTP:', error.message);
       httpServer = createServer(app);
+      console.log('🔓 HTTP server configured (SSL fallback)');
     }
   } else {
-    // Development: Create regular HTTP server
+    // Development or no SSL configured: Create regular HTTP server
     httpServer = createServer(app);
-    console.log('🔓 HTTP server configured (development mode)');
+    if (isProduction) {
+      console.log('🔓 HTTP server configured (no SSL certificates provided)');
+    } else {
+      console.log('🔓 HTTP server configured (development mode)');
+    }
   }
 
   return httpServer;

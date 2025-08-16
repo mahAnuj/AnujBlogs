@@ -32,7 +32,8 @@ export default function Home() {
       
       const url = `/api/posts?${params.toString()}`;
       
-      const response = await fetch(url);
+      const fullUrl = createApiUrl(url);
+      const response = await fetch(fullUrl);
       if (!response.ok) throw new Error('Failed to fetch posts');
       
       const data = await response.json();
