@@ -48,7 +48,7 @@ AI context requirement: All concepts must be explained specifically in relation 
 - **Schema**: Well-structured schema with users, posts, categories, tags, and comments
 - **Relationships**: Proper foreign key relationships between entities
 - **Storage Layer**: Abstracted storage interface with PostgreSQL implementation for production
-- **Deployment**: Dual storage - PostgreSQL for production (api/_lib/), in-memory for development (server/)
+- **Deployment**: PostgreSQL database with Express.js server on EC2
 
 ### Authentication & Authorization
 - **Current State**: Basic user structure in place but no authentication implemented
