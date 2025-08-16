@@ -65,11 +65,15 @@ app.use((req, res, next) => {
   // this serves both the API and the client.
   // It is the only port that is not firewalled.
   const port = parseInt(process.env.PORT || '5000', 10);
-  // For development, use localhost to avoid socket issues on macOS
-  // For production, you can set HOST environment variable to 0.0.0.0
-  const host = process.env.NODE_ENV === 'production' ? (process.env.HOST || '0.0.0.0') : 'localhost';
+  // Server binding configuration
+  // Development: bind to localhost to avoid socket issues on macOS
+  // Production: bind to 0.0.0.0 to listen on all interfaces (never bind to public IP)
+  const bindHost = process.env.NODE_ENV === 'production' ? '0.0.0.0' : 'localhost';
   
-  server.listen(port, host, () => {
-    log(`serving on ${host}:${port}`);
+  // External host for logging and URL generation (can be different from bind host)
+  const externalHost = process.env.HOST || bindHost;
+  
+  server.listen(port, bindHost, () => {
+    log(`serving on ${externalHost}:${port} (bound to ${bindHost}:${port})`);
   });
 })();
