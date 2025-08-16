@@ -12,6 +12,7 @@ import CreateMarkdownPost from "@/pages/create-markdown-post";
 import AIDashboard from "@/pages/ai-dashboard";
 import AdminLogin from "@/pages/admin-login";
 import NotFound from "@/pages/not-found";
+import { Analytics } from "@vercel/analytics/react"
 
 function Router() {
   return (
@@ -36,6 +37,7 @@ function App() {
           <TooltipProvider>
             <Toaster />
             <Router />
+            <Analytics />
           </TooltipProvider>
         </ThemeProvider>
       </AdminProvider>
