@@ -10,7 +10,6 @@ import Post from "@/pages/post";
 import CreatePost from "@/pages/create-post";
 import CreateMarkdownPost from "@/pages/create-markdown-post";
 import AIDashboard from "@/pages/ai-dashboard";
-import EnhancedAIDashboard from "@/pages/enhanced-ai-dashboard";
 import AdminLogin from "@/pages/admin-login";
 import NotFound from "@/pages/not-found";
 import { Analytics } from "@vercel/analytics/react"
@@ -23,7 +22,6 @@ function Router() {
       <Route path="/create-post" component={CreatePost} />
       <Route path="/create-markdown" component={CreateMarkdownPost} />
       <Route path="/ai-dashboard" component={AIDashboard} />
-      <Route path="/enhanced-ai-dashboard" component={EnhancedAIDashboard} />
       <Route path="/admin" component={AdminLogin} />
       <Route path="/category/:category" component={Home} />
       <Route component={NotFound} />

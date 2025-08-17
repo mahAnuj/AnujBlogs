@@ -31,8 +31,7 @@ import {
   FileText,
   Edit,
   Trash2,
-  Shield,
-  Zap
+  Shield
 } from "lucide-react";
 import { Link } from "wouter";
 
@@ -283,23 +282,15 @@ export default function AIDashboard() {
             Manage automated AI news aggregation and blog post generation
           </p>
         </div>
-        <div className="flex items-center gap-3">
-          <Button asChild variant="outline" size="lg">
-            <Link href="/enhanced-ai-dashboard" className="flex items-center gap-2">
-              <Zap className="h-4 w-4" />
-              Enhanced KaibanJS Dashboard
-            </Link>
-          </Button>
-          <Button 
-            onClick={handleStartGeneration} 
-            disabled={startGenerationMutation.isPending || runningJobs.length > 0}
-            size="lg"
-            className="flex items-center gap-2"
-          >
-            <Play className="h-4 w-4" />
-            Generate Content
-          </Button>
-        </div>
+        <Button 
+          onClick={handleStartGeneration} 
+          disabled={startGenerationMutation.isPending || runningJobs.length > 0}
+          size="lg"
+          className="flex items-center gap-2"
+        >
+          <Play className="h-4 w-4" />
+          Generate Content
+        </Button>
       </div>
 
       <Tabs defaultValue="control" className="space-y-6">

@@ -6,7 +6,6 @@ import { storage } from "./storage.js";
 import { insertPostSchema, insertCommentSchema, updatePostSchema } from "../shared/schema.js";
 import { z } from "zod";
 import { AIOrchestrator } from "./ai-agents/orchestrator.js";
-import { KaibanBlogOrchestrator } from "./ai-agents/kaibanOrchestrator.js";
 import { NewsAgent } from "./ai-agents/newsAgent.js";
 import { ContentAgent } from "./ai-agents/contentAgent.js";
 import { ReviewAgent } from "./ai-agents/reviewAgent.js";
@@ -19,10 +18,7 @@ const contentAgent = new ContentAgent(storage);
 const reviewAgent = new ReviewAgent();
 const enhanceAgent = new EnhanceAgent();
 const knowledgeAgent = new LatestKnowledgeAgent();
-
-// Initialize orchestrators (legacy and new KaibanJS)
 const aiOrchestrator = new AIOrchestrator(newsAgent, contentAgent, reviewAgent, enhanceAgent, knowledgeAgent, storage);
-const kaibanOrchestrator = new KaibanBlogOrchestrator(newsAgent, contentAgent, reviewAgent, enhanceAgent, knowledgeAgent, storage);
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Health check endpoint - no database required
@@ -360,147 +356,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error starting custom blog generation:", error);
       res.status(500).json({ error: "Failed to start custom blog generation" });
-    }
-  });
-
-  // KaibanJS Enhanced AI Routes
-  
-  // Start KaibanJS content generation with enhanced workflow visualization
-  app.post("/api/kaiban/generate", async (req, res) => {
-    try {
-      const { hoursBack = 24, minRelevanceScore = 0.7, maxArticles = 5, focusTopic } = req.body;
-      
-      const jobId = await kaibanOrchestrator.startKaibanGeneration({
-        hoursBack,
-        minRelevanceScore,
-        maxArticles,
-        focusTopic
-      });
-      
-      res.json({ 
-        jobId, 
-        status: "started",
-        orchestrator: "kaiban",
-        workflow: "news-to-blog-generation"
-      });
-    } catch (error) {
-      console.error("Error starting KaibanJS generation:", error);
-      res.status(500).json({ error: "Failed to start KaibanJS generation" });
-    }
-  });
-
-  // Start KaibanJS custom blog generation
-  app.post("/api/kaiban/generate-custom", async (req, res) => {
-    try {
-      const { topic, userPrompt } = req.body;
-      
-      if (!topic || typeof topic !== 'string' || !topic.trim()) {
-        return res.status(400).json({ error: "Topic is required" });
-      }
-      
-      const jobId = await kaibanOrchestrator.startKaibanCustomGeneration({
-        topic: topic.trim(),
-        userPrompt: userPrompt?.trim() || null,
-        type: 'custom'
-      });
-      
-      res.json({ 
-        jobId, 
-        status: "started", 
-        topic: topic.trim(),
-        userPrompt: userPrompt?.trim() || null,
-        orchestrator: "kaiban",
-        workflow: "custom-blog-generation"
-      });
-    } catch (error) {
-      console.error("Error starting KaibanJS custom generation:", error);
-      res.status(500).json({ error: "Failed to start KaibanJS custom generation" });
-    }
-  });
-
-  // Get KaibanJS job status with workflow details
-  app.get("/api/kaiban/jobs/:jobId", async (req, res) => {
-    try {
-      const { jobId } = req.params;
-      const job = kaibanOrchestrator.getJob(jobId);
-      
-      if (!job) {
-        return res.status(404).json({ error: "KaibanJS job not found" });
-      }
-      
-      // Get additional workflow state from KaibanJS team
-      const teamState = kaibanOrchestrator.getTeamState(jobId);
-      
-      res.json({
-        ...job,
-        teamState,
-        orchestrator: "kaiban"
-      });
-    } catch (error) {
-      console.error("Error fetching KaibanJS job status:", error);
-      res.status(500).json({ error: "Failed to fetch KaibanJS job status" });
-    }
-  });
-
-  // Get all KaibanJS jobs
-  app.get("/api/kaiban/jobs", async (req, res) => {
-    try {
-      const jobs = kaibanOrchestrator.getAllJobs();
-      res.json(jobs.map(job => ({
-        ...job,
-        orchestrator: "kaiban"
-      })));
-    } catch (error) {
-      console.error("Error fetching KaibanJS jobs:", error);
-      res.status(500).json({ error: "Failed to fetch KaibanJS jobs" });
-    }
-  });
-
-  // Cancel a KaibanJS generation job
-  app.delete("/api/kaiban/jobs/:jobId", async (req, res) => {
-    try {
-      const { jobId } = req.params;
-      const cancelled = kaibanOrchestrator.cancelJob(jobId);
-      
-      if (!cancelled) {
-        return res.status(404).json({ error: "KaibanJS job not found or cannot be cancelled" });
-      }
-      
-      res.json({ status: "cancelled", orchestrator: "kaiban" });
-    } catch (error) {
-      console.error("Error cancelling KaibanJS job:", error);
-      res.status(500).json({ error: "Failed to cancel KaibanJS job" });
-    }
-  });
-
-  // Get KaibanJS statistics
-  app.get("/api/kaiban/stats", async (req, res) => {
-    try {
-      const stats = kaibanOrchestrator.getStats();
-      res.json({
-        ...stats,
-        orchestrator: "kaiban"
-      });
-    } catch (error) {
-      console.error("Error fetching KaibanJS stats:", error);
-      res.status(500).json({ error: "Failed to fetch KaibanJS statistics" });
-    }
-  });
-
-  // Get KaibanJS team state for a specific job (for real-time monitoring)
-  app.get("/api/kaiban/teams/:jobId/state", async (req, res) => {
-    try {
-      const { jobId } = req.params;
-      const teamState = kaibanOrchestrator.getTeamState(jobId);
-      
-      if (!teamState) {
-        return res.status(404).json({ error: "Team not found or job completed" });
-      }
-      
-      res.json(teamState);
-    } catch (error) {
-      console.error("Error fetching team state:", error);
-      res.status(500).json({ error: "Failed to fetch team state" });
     }
   });
 
