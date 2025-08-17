@@ -11,8 +11,10 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
+import KaibanBoard from "@/components/kaiban-board";
 import { 
   Play, 
   Square, 
@@ -32,22 +34,33 @@ import {
   Edit,
   Trash2,
   Shield,
-  Zap
+  Zap,
+  Activity,
+  Users,
+  Settings
 } from "lucide-react";
 import { Link } from "wouter";
 
-interface GenerationJob {
+interface KaibanGenerationJob {
   id: string;
-  status: 'pending' | 'fetching' | 'analyzing' | 'generating' | 'reviewing' | 'completed' | 'failed';
+  status: 'pending' | 'active' | 'completed' | 'failed' | 'cancelled';
   progress: number;
   startedAt: string;
   completedAt?: string;
   error?: string;
   config: {
-    hoursBack: number;
-    minRelevanceScore: number;
-    maxArticles: number;
+    hoursBack?: number;
+    minRelevanceScore?: number;
+    maxArticles?: number;
     focusTopic?: string;
+    topic?: string;
+    type?: string;
+  };
+  workflowStatus?: {
+    currentTask?: string;
+    activeTasks: string[];
+    completedTasks: string[];
+    failedTasks: string[];
   };
   results?: {
     articlesFound: number;
@@ -57,6 +70,7 @@ interface GenerationJob {
     postIds?: string[];
     reviewResults?: Array<{postId: string; approved: boolean; qualityScore: number}>;
   };
+  orchestrator?: string;
 }
 
 interface NewsArticle {
@@ -75,39 +89,51 @@ interface AIStats {
   failedJobs: number;
   averageArticlesPerJob: number;
   averageGenerationTime: number;
+  activeJobs?: number;
+  kaibanGenerated?: boolean;
+  orchestrator?: string;
 }
 
-export default function AIDashboard() {
+export default function EnhancedAIDashboard() {
   const { toast } = useToast();
   const [, setLocation] = useLocation();
   const { isAdmin } = useAdmin();
+  
+  // UI State
+  const [useKaibanOrchestrator, setUseKaibanOrchestrator] = useState(true);
   const [generationConfig, setGenerationConfig] = useState({
     hoursBack: 24,
     minRelevanceScore: 0.7,
     maxArticles: 5,
     focusTopic: ""
   });
-
   const [customBlogTopic, setCustomBlogTopic] = useState("");
   const [customUserPrompt, setCustomUserPrompt] = useState("");
-
+  
   // Redirect non-admin users to login
   if (!isAdmin) {
     setLocation('/admin');
     return null;
   }
 
-  // Queries
-  const { data: jobs = [], refetch: refetchJobs } = useQuery<GenerationJob[]>({
-    queryKey: ["/api/ai/jobs"],
+  // Choose API endpoints based on orchestrator selection
+  const getApiPath = (endpoint: string) => {
+    return useKaibanOrchestrator ? `/api/kaiban/${endpoint}` : `/api/ai/${endpoint}`;
+  };
+
+  // Queries for KaibanJS jobs
+  const { data: jobs = [], refetch: refetchJobs } = useQuery<KaibanGenerationJob[]>({
+    queryKey: [getApiPath("jobs")],
     refetchInterval: 2000, // Poll every 2 seconds for real-time updates
   });
 
+  // Query for stats
   const { data: stats } = useQuery<AIStats>({
-    queryKey: ["/api/ai/stats"],
+    queryKey: [getApiPath("stats")],
     refetchInterval: 10000, // Update stats every 10 seconds
   });
 
+  // Query for news preview
   const { data: newsPreview = [], refetch: refetchNews, isLoading: isLoadingNews } = useQuery<NewsArticle[]>({
     queryKey: ["/api/ai/news"],
     queryFn: () => fetch(`/api/ai/news?hours=${generationConfig.hoursBack}`).then(res => res.json()),
@@ -126,16 +152,16 @@ export default function AIDashboard() {
     refetchInterval: 10000, // Check for posts every 10 seconds
   });
 
-  // Mutations
+  // Mutations for KaibanJS generation
   const startGenerationMutation = useMutation({
     mutationFn: async (config: typeof generationConfig) => {
-      const response = await apiRequest("POST", "/api/ai/generate", config);
+      const response = await apiRequest("POST", getApiPath("generate"), config);
       return response.json();
     },
     onSuccess: (data: any) => {
       toast({
         title: "Generation Started",
-        description: `AI content generation job ${data.jobId} has been started.`,
+        description: `${useKaibanOrchestrator ? 'KaibanJS' : 'Standard'} content generation job ${data.jobId} has been started.`,
       });
       refetchJobs();
     },
@@ -150,13 +176,13 @@ export default function AIDashboard() {
 
   const generateCustomBlogMutation = useMutation({
     mutationFn: async (data: { topic: string; userPrompt?: string }) => {
-      const response = await apiRequest("POST", "/api/ai/generate-custom", data);
+      const response = await apiRequest("POST", getApiPath("generate-custom"), data);
       return response.json();
     },
     onSuccess: (data: any) => {
       toast({
         title: "Blog Generation Started",
-        description: `Started generating blog post about "${customBlogTopic}".`,
+        description: `Started generating blog post about "${customBlogTopic}" using ${useKaibanOrchestrator ? 'KaibanJS' : 'Standard'} orchestrator.`,
       });
       setCustomBlogTopic("");
       setCustomUserPrompt("");
@@ -173,7 +199,7 @@ export default function AIDashboard() {
 
   const cancelJobMutation = useMutation({
     mutationFn: async (jobId: string) => {
-      const response = await apiRequest("DELETE", `/api/ai/jobs/${jobId}`);
+      const response = await apiRequest("DELETE", `${getApiPath("jobs")}/${jobId}`);
       return response.json();
     },
     onSuccess: () => {
@@ -245,8 +271,10 @@ export default function AIDashboard() {
     switch (status) {
       case 'completed': return 'bg-green-500';
       case 'failed': return 'bg-red-500';
-      case 'pending': return 'bg-gray-500';
-      default: return 'bg-blue-500';
+      case 'cancelled': return 'bg-gray-500';
+      case 'pending': return 'bg-yellow-500';
+      case 'active': return 'bg-blue-500';
+      default: return 'bg-gray-500';
     }
   };
 
@@ -254,13 +282,16 @@ export default function AIDashboard() {
     switch (status) {
       case 'completed': return <CheckCircle className="h-4 w-4" />;
       case 'failed': return <XCircle className="h-4 w-4" />;
+      case 'cancelled': return <Square className="h-4 w-4" />;
       case 'pending': return <Clock className="h-4 w-4" />;
+      case 'active': return <Activity className="h-4 w-4 animate-spin" />;
       default: return <RefreshCw className="h-4 w-4 animate-spin" />;
     }
   };
 
-  const runningJobs = jobs.filter(job => !['completed', 'failed'].includes(job.status));
+  const runningJobs = jobs.filter(job => ['pending', 'active'].includes(job.status));
   const latestJobs = jobs.slice(0, 5);
+  const kaibanJobs = jobs.filter(job => useKaibanOrchestrator && ['pending', 'active'].includes(job.status));
 
   return (
     <div className="container mx-auto px-4 py-8 space-y-8">
@@ -274,37 +305,61 @@ export default function AIDashboard() {
                 Back to Blog
               </Button>
             </Link>
+            <Link href="/ai-dashboard">
+              <Button variant="ghost" size="sm">
+                <Bot className="h-4 w-4 mr-2" />
+                Standard Dashboard
+              </Button>
+            </Link>
             <h1 className="text-3xl font-bold text-gray-900 dark:text-white flex items-center gap-3">
               <Bot className="h-8 w-8 text-blue-600" />
-              AI Content Dashboard
+              Enhanced AI Dashboard
+              {useKaibanOrchestrator && (
+                <Badge variant="secondary" className="text-sm">
+                  <Zap className="h-3 w-3 mr-1" />
+                  KaibanJS
+                </Badge>
+              )}
             </h1>
           </div>
           <p className="text-gray-600 dark:text-gray-300">
-            Manage automated AI news aggregation and blog post generation
+            {useKaibanOrchestrator 
+              ? "Advanced multi-agent AI workflow with KaibanJS visualization"
+              : "Manage automated AI news aggregation and blog post generation"
+            }
           </p>
         </div>
-        <div className="flex items-center gap-3">
-          <Button asChild variant="outline" size="lg">
-            <Link href="/enhanced-ai-dashboard" className="flex items-center gap-2">
-              <Zap className="h-4 w-4" />
-              Enhanced KaibanJS Dashboard
-            </Link>
-          </Button>
+        
+        <div className="flex items-center gap-4">
+          {/* Orchestrator Toggle */}
+          <div className="flex items-center gap-3 p-3 border rounded-lg bg-white dark:bg-gray-800">
+            <Settings className="h-4 w-4 text-gray-600" />
+            <div className="flex items-center gap-2">
+              <span className="text-sm font-medium">Standard</span>
+              <Switch
+                checked={useKaibanOrchestrator}
+                onCheckedChange={setUseKaibanOrchestrator}
+              />
+              <span className="text-sm font-medium">KaibanJS</span>
+            </div>
+          </div>
+          
           <Button 
             onClick={handleStartGeneration} 
             disabled={startGenerationMutation.isPending || runningJobs.length > 0}
             size="lg"
             className="flex items-center gap-2"
           >
-            <Play className="h-4 w-4" />
+            {useKaibanOrchestrator ? <Zap className="h-4 w-4" /> : <Play className="h-4 w-4" />}
             Generate Content
           </Button>
         </div>
       </div>
 
       <Tabs defaultValue="control" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-6">
+        <TabsList className="grid w-full grid-cols-7">
           <TabsTrigger value="control">Control Panel</TabsTrigger>
+          <TabsTrigger value="workflow">Workflow</TabsTrigger>
           <TabsTrigger value="posts">Published Posts</TabsTrigger>
           <TabsTrigger value="drafts">Drafts ({draftPosts.length})</TabsTrigger>
           <TabsTrigger value="jobs">Jobs</TabsTrigger>
@@ -312,75 +367,58 @@ export default function AIDashboard() {
           <TabsTrigger value="stats">Statistics</TabsTrigger>
         </TabsList>
 
-        {/* Published Posts Management */}
-        <TabsContent value="posts" className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <FileText className="h-5 w-5" />
-                Published Posts ({publishedPosts.length})
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              {publishedPosts.length === 0 ? (
-                <div className="text-center py-8">
-                  <p className="text-gray-500">No published posts yet.</p>
+        {/* Workflow Visualization Tab */}
+        <TabsContent value="workflow" className="space-y-6">
+          {kaibanJobs.length > 0 ? (
+            <div className="space-y-6">
+              {kaibanJobs.map((job) => (
+                <KaibanBoard
+                  key={job.id}
+                  jobId={job.id}
+                  status={job.status}
+                  progress={job.progress}
+                  workflowStatus={job.workflowStatus}
+                  config={job.config}
+                  onCancel={handleCancelJob}
+                  onViewResults={(jobId) => {
+                    // Navigate to results view
+                    const job = jobs.find(j => j.id === jobId);
+                    if (job?.results?.postId) {
+                      window.open(`/post/${job.results.postId}`, '_blank');
+                    }
+                  }}
+                />
+              ))}
+            </div>
+          ) : (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Users className="h-5 w-5" />
+                  KaibanJS Workflow Visualization
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-center py-12">
+                  <Bot className="h-16 w-16 text-gray-400 mx-auto mb-4" />
+                  <h3 className="text-lg font-semibold mb-2">No Active Workflows</h3>
+                  <p className="text-gray-600 dark:text-gray-400 mb-4">
+                    Start a generation job to see the KaibanJS workflow visualization in action.
+                  </p>
+                  <div className="flex justify-center gap-2">
+                    <Button 
+                      onClick={handleStartGeneration}
+                      disabled={!useKaibanOrchestrator}
+                      className="flex items-center gap-2"
+                    >
+                      <Zap className="h-4 w-4" />
+                      Start KaibanJS Workflow
+                    </Button>
+                  </div>
                 </div>
-              ) : (
-                <div className="space-y-4">
-                  {publishedPosts.map((post) => (
-                    <div key={post.id} className="p-4 border rounded-lg">
-                      <div className="flex items-start justify-between">
-                        <div className="flex-1">
-                          <h3 className="font-semibold text-lg mb-1">{post.title}</h3>
-                          <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">{post.excerpt}</p>
-                          <div className="flex items-center gap-4 text-sm text-gray-500">
-                            <span>Published: {new Date(post.publishedAt).toLocaleDateString()}</span>
-                            <span>{post.readTime} min read</span>
-                            <span>{post.views} views</span>
-                            <span>{post.likes} likes</span>
-                          </div>
-                          <div className="flex flex-wrap gap-1 mt-2">
-                            {post.tags?.map((tag: string) => (
-                              <Badge key={tag} variant="secondary" className="text-xs">
-                                {tag}
-                              </Badge>
-                            ))}
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-2 ml-4">
-                          <Button asChild size="sm" variant="outline">
-                            <Link href={`/post/${post.slug}`} className="flex items-center gap-1">
-                              <Eye className="h-4 w-4" />
-                              View
-                            </Link>
-                          </Button>
-                          <Button asChild size="sm" variant="outline">
-                            <Link href={`/create-markdown?edit=${post.id}`} className="flex items-center gap-1">
-                              <Edit className="h-4 w-4" />
-                              Edit
-                            </Link>
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="destructive"
-                            onClick={() => {
-                              if (window.confirm('Are you sure you want to delete this post?')) {
-                                deletePostMutation.mutate(post.id);
-                              }
-                            }}
-                            disabled={deletePostMutation.isPending}
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
+          )}
         </TabsContent>
 
         {/* Control Panel */}
@@ -390,6 +428,12 @@ export default function AIDashboard() {
               <CardTitle className="flex items-center gap-2">
                 <Bot className="h-5 w-5" />
                 Generation Configuration
+                {useKaibanOrchestrator && (
+                  <Badge variant="outline" className="ml-2">
+                    <Zap className="h-3 w-3 mr-1" />
+                    Enhanced with KaibanJS
+                  </Badge>
+                )}
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -459,6 +503,12 @@ export default function AIDashboard() {
               <CardTitle className="flex items-center gap-2">
                 <FileText className="h-5 w-5" />
                 Generate Blog on Custom Topic
+                {useKaibanOrchestrator && (
+                  <Badge variant="outline" className="ml-2">
+                    <Zap className="h-3 w-3 mr-1" />
+                    KaibanJS Workflow
+                  </Badge>
+                )}
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -498,13 +548,13 @@ export default function AIDashboard() {
                     disabled={generateCustomBlogMutation.isPending || !customBlogTopic.trim() || runningJobs.length > 0}
                     className="flex items-center gap-2"
                   >
-                    <Bot className="h-4 w-4" />
+                    {useKaibanOrchestrator ? <Zap className="h-4 w-4" /> : <Bot className="h-4 w-4" />}
                     Generate Blog
                   </Button>
                 </div>
               </div>
               <p className="text-sm text-gray-600 dark:text-gray-400">
-                AI will research and generate a comprehensive blog post on the provided topic with your custom instructions.
+                AI will research and generate a comprehensive blog post on the provided topic{useKaibanOrchestrator && ' using enhanced KaibanJS multi-agent workflow'}.
               </p>
             </CardContent>
           </Card>
@@ -514,8 +564,14 @@ export default function AIDashboard() {
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <RefreshCw className="h-5 w-5 animate-spin" />
-                  Active Generation
+                  <Activity className="h-5 w-5 animate-spin" />
+                  Active Generation Jobs
+                  {useKaibanOrchestrator && (
+                    <Badge variant="secondary" className="ml-2">
+                      <Zap className="h-3 w-3 mr-1" />
+                      KaibanJS
+                    </Badge>
+                  )}
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
@@ -526,8 +582,14 @@ export default function AIDashboard() {
                         {getStatusIcon(job.status)}
                         <span className="font-medium capitalize">{job.status}</span>
                         <Badge variant="outline">
-                          {job.config.focusTopic || "General AI"}
+                          {job.config.focusTopic || job.config.topic || "General AI"}
                         </Badge>
+                        {job.orchestrator === 'kaiban' && (
+                          <Badge variant="secondary" className="text-xs">
+                            <Zap className="h-3 w-3 mr-1" />
+                            KaibanJS
+                          </Badge>
+                        )}
                       </div>
                       <Button
                         variant="outline"
@@ -541,12 +603,94 @@ export default function AIDashboard() {
                     <Progress value={job.progress} className="h-2" />
                     <div className="text-sm text-gray-600 dark:text-gray-400">
                       {job.progress}% complete - Started {new Date(job.startedAt).toLocaleTimeString()}
+                      {job.workflowStatus?.currentTask && (
+                        <div className="mt-1 text-blue-600 dark:text-blue-400">
+                          Current: {job.workflowStatus.currentTask}
+                        </div>
+                      )}
                     </div>
                   </div>
                 ))}
               </CardContent>
             </Card>
           )}
+        </TabsContent>
+
+        {/* Published Posts Management */}
+        <TabsContent value="posts" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <FileText className="h-5 w-5" />
+                Published Posts ({publishedPosts.length})
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {publishedPosts.length === 0 ? (
+                <div className="text-center py-8">
+                  <p className="text-gray-500">No published posts yet.</p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {publishedPosts.map((post) => (
+                    <div key={post.id} className="p-4 border rounded-lg">
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1">
+                          <h3 className="font-semibold text-lg mb-1">{post.title}</h3>
+                          <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">{post.excerpt}</p>
+                          <div className="flex items-center gap-4 text-sm text-gray-500">
+                            <span>Published: {new Date(post.publishedAt).toLocaleDateString()}</span>
+                            <span>{post.readTime} min read</span>
+                            <span>{post.views} views</span>
+                            <span>{post.likes} likes</span>
+                            {post.metadata?.kaibanGenerated && (
+                              <Badge variant="secondary" className="text-xs">
+                                <Zap className="h-3 w-3 mr-1" />
+                                KaibanJS
+                              </Badge>
+                            )}
+                          </div>
+                          <div className="flex flex-wrap gap-1 mt-2">
+                            {post.tags?.map((tag: string) => (
+                              <Badge key={tag} variant="secondary" className="text-xs">
+                                {tag}
+                              </Badge>
+                            ))}
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2 ml-4">
+                          <Button asChild size="sm" variant="outline">
+                            <Link href={`/post/${post.slug}`} className="flex items-center gap-1">
+                              <Eye className="h-4 w-4" />
+                              View
+                            </Link>
+                          </Button>
+                          <Button asChild size="sm" variant="outline">
+                            <Link href={`/create-markdown?edit=${post.id}`} className="flex items-center gap-1">
+                              <Edit className="h-4 w-4" />
+                              Edit
+                            </Link>
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="destructive"
+                            onClick={() => {
+                              if (window.confirm('Are you sure you want to delete this post?')) {
+                                deletePostMutation.mutate(post.id);
+                              }
+                            }}
+                            disabled={deletePostMutation.isPending}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
         </TabsContent>
 
         {/* Jobs History */}
@@ -572,16 +716,24 @@ export default function AIDashboard() {
                           {getStatusIcon(job.status)}
                           <div>
                             <div className="font-medium">
-                              {job.config.focusTopic || "General AI News"}
+                              {job.config.focusTopic || job.config.topic || "General AI News"}
                             </div>
                             <div className="text-sm text-gray-600 dark:text-gray-400">
                               {new Date(job.startedAt).toLocaleString()}
                             </div>
                           </div>
                         </div>
-                        <Badge className={getStatusColor(job.status)}>
-                          {job.status}
-                        </Badge>
+                        <div className="flex items-center gap-2">
+                          <Badge className={getStatusColor(job.status)}>
+                            {job.status}
+                          </Badge>
+                          {job.orchestrator === 'kaiban' && (
+                            <Badge variant="secondary" className="text-xs">
+                              <Zap className="h-3 w-3 mr-1" />
+                              KaibanJS
+                            </Badge>
+                          )}
+                        </div>
                       </div>
                       
                       {job.results && (
@@ -652,6 +804,15 @@ export default function AIDashboard() {
                                 <span>•</span>
                                 <Badge variant="secondary" className="text-xs">
                                   AI Generated
+                                </Badge>
+                              </>
+                            )}
+                            {post.metadata?.kaibanGenerated && (
+                              <>
+                                <span>•</span>
+                                <Badge variant="secondary" className="text-xs">
+                                  <Zap className="h-3 w-3 mr-1" />
+                                  KaibanJS
                                 </Badge>
                               </>
                             )}
@@ -872,6 +1033,12 @@ export default function AIDashboard() {
                 </CardHeader>
                 <CardContent>
                   <div className="text-2xl font-bold">{stats.totalJobs}</div>
+                  {stats.kaibanGenerated && (
+                    <p className="text-xs text-blue-600 mt-1">
+                      <Zap className="h-3 w-3 mr-1 inline" />
+                      KaibanJS Enhanced
+                    </p>
+                  )}
                 </CardContent>
               </Card>
               
@@ -891,12 +1058,12 @@ export default function AIDashboard() {
               
               <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Avg Articles</CardTitle>
-                  <Newspaper className="h-4 w-4 text-muted-foreground" />
+                  <CardTitle className="text-sm font-medium">Active Jobs</CardTitle>
+                  <Activity className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
                   <div className="text-2xl font-bold">
-                    {Math.round(stats.averageArticlesPerJob)}
+                    {stats.activeJobs || 0}
                   </div>
                 </CardContent>
               </Card>
